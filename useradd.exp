@@ -1,0 +1,34 @@
+#!/usr/bin/expect -f
+# ------------------------------------------------------------------------
+# Copyright (c) 2016 project AutomicDeploy
+# This script is licensed under GNU GPL version 2.0 or above
+# author: yinglj@gmail.com
+# -------------------------------------------------------------------------
+# Expect script to supply root/admin password for remote ssh server and execute command.
+# This script needs five argument to(s) connect to remote server:
+# user = User Name of remote Linux/UNIX server, no hostname
+# password = Password of remote Linux/UNIX server, for root user.
+# ipaddr = IP Addreess of remote Linux/UNIX server, no hostname
+# newuser = New User Name to be created on remote Linux/UNIX server
+# newpassword = New User Password of the New User of remote Linux/UNIX server
+# If you username and passwd has not pass the rsa trust, your login will fail.
+#
+# Usage For example:
+# ./useradd.exp root password 192.168.1.11 mongo yqMmFXXT7vPPAje4
+
+set timeout 60
+set user [lindex $argv 0]
+set password [lindex $argv 1]
+set ip_addr [lindex $argv 2]
+set newuser [lindex $argv 3]
+set newpassword [lindex $argv 4]
+spawn ssh "$user@$ip_addr" "useradd $newuser;passwd $newuser"
+expect "*assword:*"
+send "$password\r"
+sleep 1
+#send "\n"
+expect "assword:*"
+send "$newpassword\r"
+expect "assword:*"
+send "$newpassword\r"
+expect eof

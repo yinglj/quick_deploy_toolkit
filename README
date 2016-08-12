@@ -1,0 +1,6 @@
+need install python-pexpect package, also you can visit https://pypi.python.org/pypi/pexpect
+redhat or centos install command:
+yum install python-pexpect
+ubuntu install command:
+apt-get install python-pexpect
+
