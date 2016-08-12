@@ -4,3 +4,6 @@ yum install python-pexpect
 ubuntu install command:
 apt-get install python-pexpect
 
+also you can use pip install pexcept. pip install pexcept
+
+
