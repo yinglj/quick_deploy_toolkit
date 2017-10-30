@@ -21,13 +21,14 @@ import pexpect
 
 class remote_shell(cmd.Cmd):
 
-    def __init__(self):
+    def __init__(self, host):
         cmd.Cmd.__init__(self)
         #self.intro = '''Enter \"help\" for instructions'''
         self.prompt = 'remote shell>'
         self.secs = 1.0
         self.count = 3
         self.his = []
+        self.host = host
 
     def quit(self):
         try:
@@ -83,20 +84,20 @@ class remote_shell(cmd.Cmd):
         if len(line)>1 and line[0:2] == "vi":
             print "can't support vi or vim. Interactive command is so on."
             return False
-        remote_cmd(line)
+        self.remote_cmd(self.host, line)
         pass
 
     def do_shell(self, line):
         '''Execute the rest of the line as a shell command, eg. \'!ls\', \'shell pwd\'.
     ! for localhost, shell or none for remote host.'''
-        remote_cmd(line)
+        self.remote_cmd(self.host, line)
 
     def do_run(self, line):
         '''Execute the rest of the line as a shell command, eg. \'run ls\', \'run pwd\'.'''
-        remote_cmd(line)
+        self.remote_cmd(self.host, line)
 
-def remote_cmd(line):
-        szCmd = os.path.dirname(os.path.realpath(__file__))+"/remote_cmd.py "+line
+    def remote_cmd(self, host, line):
+        szCmd = os.path.dirname(os.path.realpath(__file__))+"/remote_cmd.py"+host+" "+line
         print szCmd;
         command = subprocess.Popen(szCmd, shell=True, stdout=subprocess.PIPE)
         while 1:
@@ -107,10 +108,14 @@ def remote_cmd(line):
         #print command.communicate()[0],
 
 if __name__ == '__main__':
-        if len(sys.argv) > 1:
+        if len(sys.argv) > 2:
             print "usage:",sys.argv[0]
+            print "usage:",sys.argv[0],"host"
         else:
-            client = remote_shell()
+            if len(sys.argv) == 2:
+                client = remote_shell(sys.argv[1])
+            else:
+                client = remote_shell("")
             try:
                 client.cmdloop()
             except KeyboardInterrupt as e:

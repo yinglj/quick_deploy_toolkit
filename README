@@ -6,4 +6,4 @@ apt-get install python-pexpect
 
 also you can use pip install pexpect. pip install pexpect
 
-
+use base64 encode password in host.cfg file
