@@ -97,7 +97,7 @@ class remote_shell(cmd.Cmd):
         self.remote_cmd(self.host, line)
 
     def remote_cmd(self, host, line):
-        szCmd = os.path.dirname(os.path.realpath(__file__))+"/remote_cmd.py"+host+" "+line
+        szCmd = os.path.dirname(os.path.realpath(__file__))+"/remote_cmd.py "+host+" "+line
         print szCmd;
         command = subprocess.Popen(szCmd, shell=True, stdout=subprocess.PIPE)
         while 1:
