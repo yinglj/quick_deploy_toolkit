@@ -88,16 +88,16 @@ class CPStack:
 
     def showResult(self):
 
-    # print self.mapStatic;
-    mapStatic = sorted(self.mapStatic.items(), key=lambda d: d[0])  # d[1] 锟斤拷示value
-    mapStatic = sorted(mapStatic, key=lambda d: d[0])  # d[1] 锟斤拷示value
-    mapStatic = sorted(mapStatic, key=lambda d: d[1])  # d[1] 锟斤拷示value
-    for v in mapStatic:
-        print "%d\t%s" % (v[1], v[0]),
-    print "==========================================================================="
-    for v in self.listIgnores:
-        print self.listIgnores[v], "\t", v
-    print self.totalThreads, "\t", "total threads"
+        # print self.mapStatic;
+        mapStatic = sorted(self.mapStatic.items(), key=lambda d: d[0])  #
+        mapStatic = sorted(mapStatic, key=lambda d: d[0])  #
+        mapStatic = sorted(mapStatic, key=lambda d: d[1])  #
+        for v in mapStatic:
+            print "%d\t%s\n" % (v[1], v[0]),
+        print "==========================================================================="
+        for v in self.listIgnores:
+            print self.listIgnores[v], "\t", v
+        print self.totalThreads, "\t", "total threads"
 
 
 def Usage(command):
@@ -122,3 +122,4 @@ if __name__ == '__main__':
             print e
         finally:
             pass;
+

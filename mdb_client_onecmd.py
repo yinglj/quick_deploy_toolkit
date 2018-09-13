@@ -17,18 +17,24 @@ import pexpect
 import time
 
 def run_scp():
-	szCmd = "scp -o StrictHostKeyChecking=no "+sys.argv[1]+" "+sys.argv[2]+"@"+sys.argv[4]+":"+sys.argv[5]
-    print szCmd;
+	szCmd = "mdb_client " + sys.argv[1] + " "+sys.argv[2]
+	print szCmd;
 	child = pexpect.spawn(szCmd)
-	child.expect('(?i)password:')
+	child.expect("Input user:")
 	log = child.sendline(sys.argv[3])
+	child.expect('password:')
+	log = child.sendline(sys.argv[4])
+	#child.expect(pexpect.EOF)	#wait for end of the command
+	print child.before
+	log = child.sendline(sys.argv[5])
+	log = child.sendline("exit")
 	child.expect(pexpect.EOF)	#wait for end of the command
 	print child.before
 	child.close(force=True)
 
 def Usage(command):
-	print "usage:"+command+" file user userpasswd ip_addr dir";
-	print "example: "+command+" abc.tar.gz root password123 10.10.13.181 /home/mongo/";
+	print "usage:"+command+" ip  port user userpasswd mdb_cmd";
+	print "example: "+command+" 127.0.0.1 25710 cmpak 123456 info mdb";
 
 if __name__ == '__main__':
 	if len(sys.argv) <= 5:

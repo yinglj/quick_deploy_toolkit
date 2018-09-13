@@ -12,7 +12,7 @@
 # host = IP Addreess of remote Linux/UNIX server, no hostname
 # ---------------------------------------------------------------------------------------
 
-import os,sys  
+import os,sys
 import pexpect
 import time
 import re, collections
@@ -56,7 +56,7 @@ def init_command(command):
                     cmd_argv = sys.argv[2:]
                 break;
     if spec_host == "":
-        cmd_argv = sys.argv[1:]    
+        cmd_argv = sys.argv[1:]
     for i in cmd_argv:
         command += i+" ";
     #print "command:"+command
@@ -91,7 +91,7 @@ def init_command(command):
         thread.join()
 
 def onethread_run_ssh(user,password,host,workdir,command):
-    spec_cmd=szCmd = "ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no "+user+"@"+host+" ";    
+    spec_cmd=szCmd = "ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no "+user+"@"+host+" ";
     spec_cmd += command
     #print "spec_cmd:"+spec_cmd
     run_ssh(host, spec_cmd, password);

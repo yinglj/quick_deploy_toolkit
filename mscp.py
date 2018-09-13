@@ -12,11 +12,12 @@
 # host = IP Addreess of remote Linux/UNIX server, no hostname
 # ---------------------------------------------------------------------------------------
 
-import os,sys  
+import os,sys
 import pexpect
 import time
 import re, collections
 import ConfigParser
+import base64
 
 cfg = ConfigParser.ConfigParser();
 def read_cfg(filename):
@@ -49,9 +50,9 @@ def run_scp(filename):
 				host=cfg.get(i,j);
 			if j == 'workdir':
 				workdir=cfg.get(i,j);
-		szCmd = os.path.dirname(os.path.realpath(__file__))+"/scp.py "+filename+" "+user+" "+password+" "+host+" "+workdir;
+		szCmd = os.path.dirname(os.path.realpath(__file__))+"/scp.py "+filename+" "+user+" "+base64.b64decode(password)+" "+host+" "+workdir;
 		print szCmd;
-		pexpect.run(szCmd);	
+		pexpect.run(szCmd);
 
 hostcfg_demo = '''please config filename: host.cfg
 ================================================================================
