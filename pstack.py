@@ -24,12 +24,12 @@ import subprocess
 
 class CPStack:
     def __init__(self):
-        self.listPstackFiles = [];
-        self.listStat = [];
-        self.totalThreads = 0;
+        self.listPstackFiles = []
+        self.listStat = []
+        self.totalThreads = 0
         self.listIgnores = {"CSocketBase::select": 0, "CMDBSyncTableCtrl::get_syncFlag": 0, "pthread_cond_wait": 0,
-                            "nanosleep": 0};
-        self.mapStatic = {};
+                            "nanosleep": 0}
+        self.mapStatic = {}
 
         # for v in self.listIgnores:
         # self.listStat.append(0);
@@ -37,19 +37,19 @@ class CPStack:
 
     def analyseAllFiles(self):
         for i in range(1, len(sys.argv)):
-            self.listPstackFiles.append(sys.argv[i]);
+            self.listPstackFiles.append(sys.argv[i])
             # print "listPstackFiles", self.listPstackFiles;
         for v in self.listPstackFiles:
-            self.analyseOneFile(v);
-        self.showResult();
+            self.analyseOneFile(v)
+        self.showResult()
 
     def analyseOneFile(self, pstack_file):
         if not os.path.exists(pstack_file):
-            return True;
-        f = file(pstack_file, 'r');
+            return True
+        f = file(pstack_file, 'r')
         # if no mode is specified, 'r'ead mode is assumed by default
-        stat = 0;
-        lines = "";
+        stat = 0
+        lines = ""
         self.totalThreads = 0
         while True:
             line = f.readline()
@@ -57,34 +57,34 @@ class CPStack:
                 break
             if line.find("(Thread ") != -1:
                 self.totalThreads += 1
-                stat = 1;
+                stat = 1
                 lines = ""
-                continue;
+                continue
             for v in self.listIgnores:
                 if line.find(v) != -1:
-                    stat = 2;
+                    stat = 2
                     self.listIgnores[v] += 1
-                continue;
-            self.staticLine(line);
+                continue
+            self.staticLine(line)
             lines = lines + line
             if line.find("in clone") != -1 and stat == 1:
                 print lines
 
                 # print line, # Notice comma to avoid automatic newline added by Python
         f.close()  # close the file
-        return True;
+        return True
 
     def staticLine(self, line):
-        funcName = "";
-        split1 = line.split("#");
+        funcName = ""
+        split1 = line.split("#")
         if len(split1) > 1:
-            split2 = split1[1].split(" from ");
+            split2 = split1[1].split(" from ")
             if len(split2) > 1:
-                funcName = "#" + split2[0];
+                funcName = "#" + split2[0]
         if self.mapStatic.get(funcName) != None:
-            self.mapStatic[funcName] += 1;
+            self.mapStatic[funcName] += 1
         else:
-            self.mapStatic[funcName] = 1;
+            self.mapStatic[funcName] = 1
 
     def showResult(self):
 
@@ -101,19 +101,19 @@ class CPStack:
 
 
 def Usage(command):
-    print "usage:" + command + " [file]";
-    print "example: " + command + " *.pstack.*";
-    print "example: " + command + " 12345.pstack.1 12345.pstack.2";
+    print "usage:" + command + " [file]"
+    print "example: " + command + " *.pstack.*"
+    print "example: " + command + " 12345.pstack.1 12345.pstack.2"
 
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:
-        Usage(sys.argv[0]);
+        Usage(sys.argv[0])
     else:
         try:
-            client = CPStack();
-            client.analyseAllFiles();
-            time.sleep(0);
+            client = CPStack()
+            client.analyseAllFiles()
+            time.sleep(0)
         except KeyboardInterrupt as e:
             print e
         except IOError as e:
@@ -121,5 +121,5 @@ if __name__ == '__main__':
         except ValueError as e:
             print e
         finally:
-            pass;
+            pass
 
