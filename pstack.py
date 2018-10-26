@@ -81,6 +81,10 @@ class CPStack:
             split2 = split1[1].split(" from ")
             if len(split2) > 1:
                 funcName = "#" + split2[0]
+            else:
+                split2 = split1[1].split(" (")
+                if len(split2) > 1:
+                    funcName = "#" + split2[0]
         if self.mapStatic.get(funcName) != None:
             self.mapStatic[funcName] += 1
         else:

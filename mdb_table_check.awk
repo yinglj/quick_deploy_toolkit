@@ -1,6 +1,6 @@
 #!/usr/bin/awk -f
 #command: cat i.awk
-
+#run with cmd.sh
 BEGIN {
 ignores[1] = "mdb_client";
 ignores[2] = "TableName";
