@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 #code=utf-8
 
 # ---------------------------------------------------------------------------------------
@@ -18,6 +18,9 @@ import subprocess
 import time
 import os
 import pexpect
+#todo add set variable to save domain, check host.cfg is existed while set domain.
+#todo add set variable to save host
+#todo show domain host
 
 class remote_shell(cmd.Cmd):
 
@@ -29,10 +32,11 @@ class remote_shell(cmd.Cmd):
         self.count = 3
         self.his = []
         self.host = host
+        self.domain = 'host.cfg'
 
     def quit(self):
         try:
-            self.child.communicate('exit')
+            self.quit()
         except:
             pass
 
@@ -58,6 +62,33 @@ class remote_shell(cmd.Cmd):
         self.quit()
         return True
 
+    def do_set(self, line):
+        '''set the domain config or set the host or set the ip.\neg. set domain host.cfg\n    set host host158\n    set ip 10.10.13.158'''
+        parse_temp = line.split()
+        if len(parse_temp) < 1:
+            print("Please input set domain|host|ip\n")
+        else:
+            if parse_temp[0]=='host' or parse_temp[0]=='ip':
+                if len(parse_temp) == 1:
+                    self.host = ""
+                else:
+                    self.host = parse_temp[1]
+            elif parse_temp[0]=='domain':
+                if len(parse_temp) == 1:
+                    self.domain = ""
+                else:
+                    self.domain = parse_temp[1]
+                if not os.path.exists(parse_temp[1]):
+                    print("file {} is not exist.".format(parse_temp[1]))
+            else:
+                print("set host host123\nset host 10.10.13.158\nset domain host.cfg\n")
+        return False
+
+    def do_show(self, line):
+        '''show the domain and host information, eg. show.'''
+        print("domain={}, host={}\n".format(self.domain, self.host))
+        return False
+
     def do_quit(self, line):
         '''Exit remote_shell.py.'''
         self.quit()
@@ -71,7 +102,8 @@ class remote_shell(cmd.Cmd):
     def onecmd(self, line):
         '''Execute the rest of the line as a shell command, eg. \'!ls\', \'shell pwd\'.'''
         if line == "" or line == "bye" or line == "exit" or line == "by" or line == "quit" \
-            or "help" in line or line == "EOF" or "shell" in line or "run" in line:
+            or "help" in line or line == "EOF" or "shell" in line or "run" in line \
+            or "set" in line or "show" in line :
             return cmd.Cmd.onecmd(self, line)
         if line != "" and line[0] == '!':
             if len(line)>2 and line[1:3] == "vi":
@@ -97,7 +129,12 @@ class remote_shell(cmd.Cmd):
         self.remote_cmd(self.host, line)
 
     def remote_cmd(self, host, line):
-        szCmd = os.path.dirname(os.path.realpath(__file__))+"/remote_cmd.py "+host+" "+line
+        if self.host != "":
+            szCmd = "{}/remote_cmd.py --domain {} --ip {} {}".format(os.path.dirname(os.path.realpath(__file__)), 
+                self.domain, self.host, line)
+        else:
+            szCmd = "{}/remote_cmd.py --domain {} {}".format(os.path.dirname(os.path.realpath(__file__)), 
+                self.domain, line)
         print szCmd
         command = subprocess.Popen(szCmd, shell=True, stdout=subprocess.PIPE)
         while 1:

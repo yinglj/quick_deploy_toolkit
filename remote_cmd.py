@@ -19,6 +19,7 @@ import re, collections
 import ConfigParser
 import threading
 import base64
+import argparse
 
 mutex = threading.Lock()
 cfg = ConfigParser.ConfigParser()
@@ -38,10 +39,12 @@ def read_cfg(filename):
     '''
 
 #diff host1 or ip_addr
-def init_command(command):
-    read_cfg("./host.cfg")
+def init_command(domain_config, spec_host, command):
+    #read_cfg("./host.cfg")
+    read_cfg(domain_config)
     s = cfg.sections()
     cmd_argv = []
+    '''
     spec_host = ""
     if sys.argv[1] in s:    #host1 in command
         cmd_argv = sys.argv[2:]
@@ -61,6 +64,7 @@ def init_command(command):
         command += i+" "
     #print "command:"+command
     #print "spec_host:"+spec_host
+    '''
     user = ""
     password = ""
     host = ""
@@ -81,7 +85,7 @@ def init_command(command):
                 host=cfg.get(i,j)
             if j == 'workdir':
                 workdir=cfg.get(i,j)
-        if spec_host == i or spec_host =="":
+        if spec_host == i or spec_host == host or spec_host =="":
             my_thread = threading.Thread(target=onethread_run_ssh, args=(user,password,host,workdir,command,))
             #print "-------------------1----------------------------------------------------------------------"
             my_thread.start()
@@ -91,13 +95,13 @@ def init_command(command):
         thread.join()
 
 def onethread_run_ssh(user,password,host,workdir,command):
-    spec_cmd = "ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no "+user+"@"+host+" "
+    spec_cmd = "ssh -t -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no "+user+"@"+host+" "
     spec_cmd += command
     #print "spec_cmd:"+spec_cmd
     run_ssh(host, spec_cmd, password)
 
-def run_command(command):
-    init_command(command)
+def run_command(domain_config, spec_host, command):
+    init_command(domain_config, spec_host, command)
 
 def run_ssh(host, cmd, passwd):
     child = pexpect.spawn(cmd)
@@ -130,13 +134,21 @@ def Usage(command):
     print "example: "+command+" host1 'ls -l'"
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        Usage(sys.argv[0])
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--domain', default='host.cfg', help='--domain host.cfg')
+    parser.add_argument('--ip', default='', help='--ip host_ip')
+    args, unknowns = parser.parse_known_args()
+    command = ' '.join(unknowns)
+    print args
+    print unknowns
+
+    if command=="":
+        parser.print_usage()
     else:
         try:
-            command=""
+            #command=""
             #print len(sys.argv)
-            run_command(command)
+            run_command(args.domain, args.ip, command)
             time.sleep(0)
         except KeyboardInterrupt as e:
             print e
