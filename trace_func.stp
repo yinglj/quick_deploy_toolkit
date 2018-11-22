@@ -1,0 +1,20 @@
+#!/usr/bin/env stap
+# stap -l 'process("libabm_mdbD.so.1.8.8.810257")
+# stap -L 'process("libabm_mdbD.so.1.8.8.810257")
+global sends
+global pid_info
+
+probe process("/aisware/bss/bill/lib/libabm_mdbD.so.1.8.8.810257").function("query_notification_locked@/data01/cmpakbm/openbilling60_cmpak/openbilling60_cmi/balance_overseas/mdbserv/abm_base_notify.cpp:1114").return{
+# function中为函数名，同时支持通配符*等，在该函数return时计算耗时
+    if( gettimeofday_us() - @entry(gettimeofday_us()) > 500 ){
+        pid_info = pid()
+        sends <<< gettimeofday_us() - @entry(gettimeofday_us()) # 以微秒精度来统计，entry方法将一个表达式放置于函数入口处
+        #_stp_stack_user_print(CONTEXT, _STP_SYM_FULL);
+	    print_ubacktrace()
+        exit()
+    }
+}
+
+probe timer.s(10) { # 每10s打印一次直方图
+    print(@hist_log(sends))
+}
