@@ -105,7 +105,7 @@ def run_command(domain_config, spec_host, command):
 
 def run_ssh(host, cmd, passwd):
     child = pexpect.spawn(cmd)
-    child.expect('password:')
+    child.expect('(!*)password:(!*)')
     _ = child.sendline(base64.b64decode(passwd))
     child.expect(pexpect.EOF)
     if mutex.acquire():

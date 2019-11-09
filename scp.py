@@ -20,7 +20,7 @@ def run_scp():
 	szCmd = "scp -o StrictHostKeyChecking=no "+sys.argv[1]+" "+sys.argv[2]+"@"+sys.argv[4]+":"+sys.argv[5]
     print szCmd;
 	child = pexpect.spawn(szCmd)
-	child.expect('(?i)password:')
+	child.expect('(!*)password:(!*)')
 	log = child.sendline(sys.argv[3])
 	child.expect(pexpect.EOF)	#wait for end of the command
 	print child.before
