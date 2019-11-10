@@ -23,7 +23,7 @@ import argparse
 
 mutex = threading.Lock()
 cfg = ConfigParser.ConfigParser()
-global spec_host
+#global spec_host
 spec_cmd = ""
 cmds = []
 def read_cfg(filename):
@@ -40,8 +40,8 @@ def read_cfg(filename):
 
 #diff host1 or ip_addr
 def init_command(domain_config, spec_host, command):
-    #read_cfg("./host.cfg")
-    read_cfg(domain_config)
+    read_cfg("./host.cfg")
+    #read_cfg(domain_config)
     s = cfg.sections()
     cmd_argv = []
     '''
@@ -69,6 +69,7 @@ def init_command(domain_config, spec_host, command):
     password = ""
     host = ""
     workdir = ""
+    domain=""
     thread_list = []
     for i in s:
         #szCmd=""
@@ -85,6 +86,11 @@ def init_command(domain_config, spec_host, command):
                 host=cfg.get(i,j)
             if j == 'workdir':
                 workdir=cfg.get(i,j)
+            if j == 'domain':
+                domain=cfg.get(i,j)
+        if domain_config != "" and domain_config != "all" and domain != domain_config:
+            continue
+
         if spec_host == i or spec_host == host or spec_host =="":
             my_thread = threading.Thread(target=onethread_run_ssh, args=(user,password,host,workdir,command,))
             #print "-------------------1----------------------------------------------------------------------"
@@ -120,6 +126,7 @@ hostcfg = '''please config filename: host.cfg
 ================================================================================
 content example:
 [host1]
+domain = database
 user = mongodb
 password = oXV4LYH2EUQiHpcg
 host = 10.10.13.170
@@ -135,12 +142,12 @@ def Usage(command):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--domain', default='host.cfg', help='--domain host.cfg')
+    parser.add_argument('--domain', default='all', help='--domain all')
     parser.add_argument('--ip', default='', help='--ip host_ip')
     args, unknowns = parser.parse_known_args()
     command = ' '.join(unknowns)
-    print args
-    print unknowns
+    #print args
+    #print unknowns
 
     if command=="":
         parser.print_usage()
