@@ -77,6 +77,7 @@ def init_command(domain_config, spec_host, command):
         password = ""
         host = ""
         workdir = ""
+        port = "22"
         for j in cfg.options(i):
             if j == 'user':
                 user=cfg.get(i,j)
@@ -84,6 +85,8 @@ def init_command(domain_config, spec_host, command):
                 password=cfg.get(i,j)
             if j == 'host':
                 host=cfg.get(i,j)
+            if j == 'port':
+                port=cfg.get(i,j)
             if j == 'workdir':
                 workdir=cfg.get(i,j)
             if j == 'domain':
@@ -92,7 +95,7 @@ def init_command(domain_config, spec_host, command):
             continue
 
         if spec_host == i or spec_host == host or spec_host =="":
-            my_thread = threading.Thread(target=onethread_run_ssh, args=(user,password,host,workdir,command,))
+            my_thread = threading.Thread(target=onethread_run_ssh, args=(user,password,host,port,workdir,command,))
             #print "-------------------1----------------------------------------------------------------------"
             my_thread.start()
             #print "-------------------2----------------------------------------------------------------------"
@@ -100,8 +103,8 @@ def init_command(domain_config, spec_host, command):
     for thread in thread_list:
         thread.join()
 
-def onethread_run_ssh(user,password,host,workdir,command):
-    spec_cmd = "ssh -t -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no "+user+"@"+host+" "
+def onethread_run_ssh(user,password,host,port,workdir,command):
+    spec_cmd = "ssh -t -p {} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no {}@{} ".format(port, user, host)
     spec_cmd += command
     #print "spec_cmd:"+spec_cmd
     run_ssh(host, spec_cmd, password)
