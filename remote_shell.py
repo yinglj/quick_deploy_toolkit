@@ -26,6 +26,7 @@ import signal
 import termios
 import struct
 import fcntl
+import socket
 #todo add set variable to save domain, check host.cfg is existed while set domain.
 #todo add set variable to save host
 #todo show domain host
@@ -38,13 +39,14 @@ class remote_shell(cmd.Cmd):
     def __init__(self, host):
         cmd.Cmd.__init__(self)
         #self.intro = '''Enter \"help\" for instructions'''
-        self.prompt = 'remote shell>'
         self.secs = 1.0
         self.count = 3
         self.his = []
+        self.hostName = socket.gethostname()
         self.host = host
         self.config_file = 'host.cfg'
         self.domain = "all"
+        self.prompt = '\033[36;1m{} {} {} remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
         self.mapDomainHost = defaultdict(list)
         cfg.read(self.config_file)
         
@@ -74,7 +76,7 @@ class remote_shell(cmd.Cmd):
 
     def do_prompt(self, line):
         '''Set command prompt, eg. \"prompt remote shell\"'''
-        self.prompt = 'remote shell>'
+        self.prompt = '\033[36;1m{} {} {} remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
 
     def do_EOF(self, line):
         '''Exit remote_shell.py with EOF.'''
@@ -137,7 +139,7 @@ class remote_shell(cmd.Cmd):
         #print("*====================================================================================================================*")
         print("* 帮  助 $  输入HOST.NO,登录对应主机   | exit: 退出 | set domain: 切换主机域  | 当前域：\033[31;1m{: <10} {: >15}\033[0m   *".format(self.domain, self.host))
         print("*====================================================================================================================*")
-
+        self.prompt = '\033[36;1m{} {} {} remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
     
     def emptyline(self):
         self.refresh_menu()
@@ -166,6 +168,7 @@ class remote_shell(cmd.Cmd):
                     self.host = ""
                 else:
                     self.host = parse_temp[1]
+                self.refresh_menu()
             elif parse_temp[0]=='domain':
                 if len(parse_temp) == 1:
                     self.domain = "all"
@@ -177,6 +180,7 @@ class remote_shell(cmd.Cmd):
                         self.domain = parse_temp[1]
                     #if not os.path.exists(parse_temp[1]):
                     #    print("file {} is not exist.".format(parse_temp[1]))
+                self.refresh_menu()
             else:
                 print("set host host123\nset host 10.10.13.158\nset domain mdb")
         return False
@@ -258,7 +262,8 @@ class remote_shell(cmd.Cmd):
         user = cfg.get(host, "user")
         password = cfg.get(host, "password")
         ip = cfg.get(host, "host")
-        cmd = "ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no "+user+"@"+ip+" "
+        port = cfg.get(host, "port")
+        cmd = "ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {} {}@{}".format(port, user, ip)
         print cmd
         child = pexpect.spawn(cmd)
         #signal.signal(signal.SIGWINCH, self.sigwinch_passthrough)
