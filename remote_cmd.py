@@ -40,7 +40,7 @@ def read_cfg(filename):
 
 #diff host1 or ip_addr
 def init_command(domain_config, spec_host, command):
-    read_cfg("./host.cfg")
+    read_cfg(sys.path[0]+"/host.cfg")
     #read_cfg(domain_config)
     s = cfg.sections()
     cmd_argv = []
@@ -115,7 +115,7 @@ def run_command(domain_config, spec_host, command):
 def run_ssh(host, cmd, passwd):
     child = pexpect.spawn(cmd)
     child.expect('(!*)password:(!*)')
-    _ = child.sendline(base64.b64decode(passwd))
+    _ = child.sendline(base64.b64decode(passwd)[:-1])    #base64解码后多一个回车键符，需要剪掉一位
     child.expect(pexpect.EOF)
     if mutex.acquire():
         print "-----------------------------------------------------------------------------------------"

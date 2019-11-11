@@ -12,76 +12,114 @@
 # host = IP Addreess of remote Linux/UNIX server, no hostname
 # ---------------------------------------------------------------------------------------
 
-import os,sys
+import os, sys
 import pexpect
 import time
 import re, collections
 import ConfigParser
 import base64
+import argparse
 
-cfg = ConfigParser.ConfigParser();
+cfg = ConfigParser.ConfigParser()
+
+
 def read_cfg(filename):
-	cfg.read(filename);
-	'''
-	s = cfg.sections()
-	print 'section:', s
-	for i in s:
-		print cfg.options(i)
-		for j in cfg.options(i):
-			print j,cfg.get(i, j)
-		print cfg.items(i)
-	'''
+    cfg.read(filename)
+    '''
+    s = cfg.sections()
+    print 'section:', s
+    for i in s:
+        print cfg.options(i)
+        for j in cfg.options(i):
+            print j,cfg.get(i, j)
+        print cfg.items(i)
+    '''
 
-def run_scp(filename):
-	read_cfg('./host.cfg');
-	s = cfg.sections()
-	user = "";
-	password = "";
-	host = "";
-	workdir = "";
-	for i in s:
-		szCmd=''
-		for j in cfg.options(i):
-			if j == 'user':
-				user=cfg.get(i,j);
-			if j == 'password':
-				password=cfg.get(i,j);
-			if j == 'host':
-				host=cfg.get(i,j);
-			if j == 'workdir':
-				workdir=cfg.get(i,j);
-		szCmd = os.path.dirname(os.path.realpath(__file__))+"/scp.py "+filename+" "+user+" "+base64.b64decode(password)+" "+host+" "+workdir;
-		print szCmd;
-		pexpect.run(szCmd);
+
+def run_scp(spec_domain, spec_host, filename):
+    read_cfg(sys.path[0] + '/host.cfg')
+    s = cfg.sections()
+    user = ""
+    password = ""
+    host = ""
+    workdir = ""
+    port = "22"
+    for i in s:
+        szCmd = ''
+        for j in cfg.options(i):
+            if j == 'user':
+                user = cfg.get(i, j)
+            if j == 'password':
+                password = cfg.get(i, j)
+            if j == 'domain':
+                domain = cfg.get(i, j)
+            if j == 'host':
+                host = cfg.get(i, j)
+            if j == 'port':
+                port = cfg.get(i, j)
+            if j == 'workdir':
+                workdir = cfg.get(i, j)
+
+        if spec_domain != "" and spec_domain != "all" and domain != spec_domain:
+            continue
+        passwd = base64.b64decode(password)[:-1]    #base64解码后多一个回车键符，需要剪掉一位
+        if spec_host == i or spec_host == host or spec_host == "":
+            szCmd = "{}/scp.py {} {} {} {} {} {} ".format(os.path.dirname(os.path.realpath(__file__)), port, filename, user, passwd, host, workdir)
+            print(szCmd)
+            #pexpect.run(szCmd)
+            (command_output, _) = pexpect.run(szCmd, withexitstatus=1)
+            print command_output
+
 
 hostcfg_demo = '''please config filename: host.cfg
 ================================================================================
 content example:
 [host1]
+domain = database
 user = mongodb
 password = oXV4LYH2EUQiHpcg
 host = 10.10.13.170
+port = 22
 workdir = /home/mongodb
 ================================================================================
 '''
 
+usage_text = "%(prog)s filename\n"
+usage_text = usage_text + hostcfg_demo
+usage_text = usage_text + "example: %(prog)s mongo.tar.gz\n"
+usage_text = usage_text + "example: %(prog)s --domain domain1 mongo.tar.gz\n"
+usage_text = usage_text + "example: %(prog)s --host host132 mongo.tar.gz\n"
+usage_text = usage_text + "example: %(prog)s --host 10.10.12.132 mongo.tar.gz\n"
+
+
 def Usage(command):
-	print "usage:"+command+" filename";
-	print hostcfg_demo
-	print "example: "+command+" mongo.tar.gz";
+    print "usage:{} filename".format(command)
+    print hostcfg_demo
+    print "example: {} mongo.tar.gz".format(command)
+    print "example: {} --domain domain1 mongo.tar.gz".format(command)
+    print "example: {} --host host132 mongo.tar.gz".format(command)
+    print "example: {} --host 10.10.12.132 mongo.tar.gz".format(command)
+
 
 if __name__ == '__main__':
-	if len(sys.argv) < 2:
-		Usage(sys.argv[0]);
-	else:
-		try:
-			run_scp(sys.argv[1])
-			time.sleep(0);
-		except KeyboardInterrupt as e:
-			print e
-		except IOError as e:
-			print e
-		except ValueError as e:
-			print e
-		finally:
-			pass;
+    parser = argparse.ArgumentParser(prog=sys.argv[0], usage=usage_text)
+    parser.add_argument('--domain', default='all', help='--domain all')
+    parser.add_argument('--host', default='', help='--host host_ip')
+    args, unknowns = parser.parse_known_args()
+    command = ' '.join(unknowns)
+
+    if len(sys.argv) < 2:
+        #Usage(sys.argv[0])
+        parser.print_help()
+    else:
+        try:
+            run_scp(args.domain, args.host, command)
+            time.sleep(0)
+        except KeyboardInterrupt as e:
+            print e
+        except IOError as e:
+            print e
+        except ValueError as e:
+            print e
+        finally:
+            pass

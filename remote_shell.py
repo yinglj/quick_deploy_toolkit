@@ -44,7 +44,7 @@ class remote_shell(cmd.Cmd):
         self.his = []
         self.hostName = socket.gethostname()
         self.host = host
-        self.config_file = 'host.cfg'
+        self.config_file = sys.path[0]+'/host.cfg'
         self.domain = "all"
         self.prompt = '\033[36;1m{} {} {} remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
         self.mapDomainHost = defaultdict(list)
@@ -270,7 +270,7 @@ class remote_shell(cmd.Cmd):
         winsize = self.getwinsize()
         child.setwinsize(winsize[0], winsize[1])
         child.expect('(!*)password:(!*)')
-        _ = child.sendline(base64.b64decode(password))
+        _ = child.sendline(base64.b64decode(password)[:-1]) #base64解码后多一个回车键符，需要剪掉一位
         child.interact()
         child.expect(pexpect.EOF)
         child.close(force=True)
