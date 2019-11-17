@@ -26,6 +26,7 @@ cfg = ConfigParser.ConfigParser()
 #global spec_host
 spec_cmd = ""
 cmds = []
+background = ""
 def read_cfg(filename):
     cfg.read(filename)
     '''
@@ -104,7 +105,7 @@ def init_command(domain_config, spec_host, command):
         thread.join()
 
 def onethread_run_ssh(user,password,host,port,workdir,command):
-    spec_cmd = "ssh -t -p {} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no {}@{} ".format(port, user, host)
+    spec_cmd = "ssh -t -p {} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no {} {}@{} ".format(port, background, user, host)
     spec_cmd += command
     #print "spec_cmd:"+spec_cmd
     run_ssh(host, spec_cmd, password)
@@ -148,9 +149,14 @@ if __name__ == '__main__':
     parser.add_argument('--domain', default='all', help='--domain all')
     parser.add_argument('--ip', default='', help='--ip host_ip')
     args, unknowns = parser.parse_known_args()
-    command = ' '.join(unknowns)
+    command = ' '.join(unknowns).replace("\"", "\\\"").replace("$", "\\$")#.replace("\'", "\\'")
+    if command[-1]=="&":    #命令行加了&，解析成后台命令
+        background = "-f -n"
+    else:
+        background = ""
+    #print command
     #print args
-    #print unknowns
+    #print "unknowns:{}".format(unknowns)
 
     if command=="":
         parser.print_usage()

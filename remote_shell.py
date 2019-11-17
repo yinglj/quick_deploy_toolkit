@@ -172,12 +172,15 @@ class remote_shell(cmd.Cmd):
             elif parse_temp[0]=='domain':
                 if len(parse_temp) == 1:
                     self.domain = "all"
+                    self.host = ""
                     #return False
                 else:
                     if(parse_temp[1] == 'all' or parse_temp[1] == 'ALL'):
                         self.domain = "all"
+                        self.host = ""
                     else:
                         self.domain = parse_temp[1]
+                        self.host = ""
                     #if not os.path.exists(parse_temp[1]):
                     #    print("file {} is not exist.".format(parse_temp[1]))
                 self.refresh_menu()
@@ -276,13 +279,16 @@ class remote_shell(cmd.Cmd):
         child.close(force=True)
 
     def remote_cmd(self, host, line):
+        line = line.replace("\"", "\\\"").replace("$", "\\$").replace("\'", "\\'")#.replace("&", "\\&")
+        line = "\""+line+"\""
+        #print "line:{}".format(line)
         if self.host != "":
             szCmd = "{}/remote_cmd.py --domain {} --ip {} {}".format(os.path.dirname(os.path.realpath(__file__)), 
                 self.domain, self.host, line)
         else:
             szCmd = "{}/remote_cmd.py --domain {} {}".format(os.path.dirname(os.path.realpath(__file__)), 
                 self.domain, line)
-        print szCmd
+        #print szCmd
         command = subprocess.Popen(szCmd, shell=True, stdout=subprocess.PIPE)
         while 1:
             out = command.stdout.readline()
