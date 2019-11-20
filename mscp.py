@@ -36,7 +36,7 @@ def read_cfg(filename):
     '''
 
 
-def run_scp(spec_domain, spec_host, filename):
+def run_scp(spec_domain, spec_host, filename, spec_dir):
     read_cfg(sys.path[0] + '/host.cfg')
     s = cfg.sections()
     user = ""
@@ -59,17 +59,19 @@ def run_scp(spec_domain, spec_host, filename):
                 port = cfg.get(i, j)
             if j == 'workdir':
                 workdir = cfg.get(i, j)
-
+        if spec_dir != "":
+            workdir = spec_dir
         if spec_domain != "" and spec_domain != "all" and domain != spec_domain:
             continue
         passwd = base64.b64decode(password)[:-1]    #base64解码后多一个回车键符，需要剪掉一位
         if spec_host == i or spec_host == host or spec_host == "":
             szCmd = "{}/scp.py {} {} {} {} {} {} ".format(os.path.dirname(os.path.realpath(__file__)), port, filename, user, passwd, host, workdir)
-            print(szCmd)
+            #print(szCmd)
             #pexpect.run(szCmd)
             (command_output, _) = pexpect.run(szCmd, withexitstatus=1)
+            print("="*128)
             print command_output
-
+    print("="*128)
 
 hostcfg_demo = '''please config filename: host.cfg
 ================================================================================
@@ -105,6 +107,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog=sys.argv[0], usage=usage_text)
     parser.add_argument('--domain', default='all', help='--domain all')
     parser.add_argument('--host', default='', help='--host host_ip')
+    parser.add_argument('--dir', default='', help='--dir /home/user1/backup/')
     args, unknowns = parser.parse_known_args()
     command = ' '.join(unknowns)
 
@@ -113,7 +116,8 @@ if __name__ == '__main__':
         parser.print_help()
     else:
         try:
-            run_scp(args.domain, args.host, command)
+            run_scp(args.domain, args.host, command, args.dir)
+            #print command
             time.sleep(0)
         except KeyboardInterrupt as e:
             print e
