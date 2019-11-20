@@ -73,6 +73,7 @@ class CPStack:
                     else:
                         self.mapStatic[self.backtrace] = 1
                 self.backtrace = ""
+                continue
             self.staticLine(line)
             lines = lines + line
             if line.find("in clone") != -1 and stat == 1:
@@ -95,12 +96,13 @@ class CPStack:
         else:
             line1 = split1[0]
         split3 = line1.split(" ")
-        split3 = [x for x in split3 if x]
+        split3 = [x for x in split3 if x]   #删除空串
         if len(split3) > 3:
             funcName = "{:0>3} {} @ {}".format(split3[0][1:], split3[1], split3[-1])
             self.backtrace =  self.backtrace + funcName
         else:
-            return
+            funcName = "{:0>3} {} @ {}".format(split3[0][1:], split3[1], split3[-1])
+            self.backtrace =  self.backtrace + funcName
         #if self.mapStatic.get(funcName) != None:
         #    self.mapStatic[funcName] += 1
         #else:
