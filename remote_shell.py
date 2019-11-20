@@ -279,7 +279,7 @@ class remote_shell(cmd.Cmd):
         child.close(force=True)
 
     def remote_cmd(self, host, line):
-        line = line.replace("\"", "\\\"").replace("$", "\\$").replace("\'", "\\'")#.replace("&", "\\&")
+        line = line.replace("\"", "\\\"").replace("$", "\\$").replace("\'", "\\'").replace("`", "\\`")
         line = "\""+line+"\""
         #print "line:{}".format(line)
         if self.host != "":
