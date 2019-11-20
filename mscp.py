@@ -19,9 +19,10 @@ import re, collections
 import ConfigParser
 import base64
 import argparse
+import threading
 
+mutex = threading.Lock()
 cfg = ConfigParser.ConfigParser()
-
 
 def read_cfg(filename):
     cfg.read(filename)
@@ -44,6 +45,7 @@ def run_scp(spec_domain, spec_host, filename, spec_dir):
     host = ""
     workdir = ""
     port = "22"
+    thread_list = []
     for i in s:
         szCmd = ''
         for j in cfg.options(i):
@@ -65,13 +67,32 @@ def run_scp(spec_domain, spec_host, filename, spec_dir):
             continue
         passwd = base64.b64decode(password)[:-1]    #base64解码后多一个回车键符，需要剪掉一位
         if spec_host == i or spec_host == host or spec_host == "":
-            szCmd = "{}/scp.py {} {} {} {} {} {} ".format(os.path.dirname(os.path.realpath(__file__)), port, filename, user, passwd, host, workdir)
-            #print(szCmd)
-            #pexpect.run(szCmd)
-            (command_output, _) = pexpect.run(szCmd, withexitstatus=1)
-            print("="*128)
-            print command_output
+            my_thread = threading.Thread(target=onethread_run_scp, args=(port, filename, user, passwd, host, workdir))
+            #print "-------------------1----------------------------------------------------------------------"
+            my_thread.start()
+            #print "-------------------2----------------------------------------------------------------------"
+            thread_list.append(my_thread)
+    for thread in thread_list:
+        thread.join()
     print("="*128)
+
+def onethread_run_scp(port, filename, user, passwd, host, workdir):     
+    szCmd = "{}/scp.py {} {} {} {} {} {} ".format(os.path.dirname(os.path.realpath(__file__)), port, filename, user, passwd, host, workdir)
+    #print(szCmd)
+    #pexpect.run(szCmd)
+    (command_output, _) = pexpect.run(szCmd, withexitstatus=1)
+    #print("="*128)
+    #print command_output
+    if mutex.acquire():
+        print "="*128
+        print "# host:{: <15}{: ^105}#".format(host," ")
+        print "{:-^128}".format("-")
+        #print command_output.replace("\n\n","\n")
+        for line in command_output.split("\n"): #过滤空行
+            if line.split():
+                print line
+	mutex.release()
+    
 
 hostcfg_demo = '''please config filename: host.cfg
 ================================================================================
