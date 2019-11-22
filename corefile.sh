@@ -25,12 +25,12 @@ GDB=${GDB:-/usr/bin/gdb}
 
 # Run GDB, strip out unwanted noise.
 # --readnever is no longer used since .gdb_index is now in use.
-$GDB --quiet -nx <<EOF 2>&1 | 
+$GDB --quiet -nx $1 $2 <<EOF 2>&1 | 
 set width 0
 set height 0
 set pagination no
-exec-file $1
-core-file $2
+#exec-file $1
+#core-file $2
 $backtrace
 info proc
 !ls -l $2
