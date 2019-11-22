@@ -115,9 +115,19 @@ def run_command(domain_config, spec_host, command):
 
 def run_ssh(host, cmd, passwd):
     child = pexpect.spawn(cmd)
-    child.expect('(!*)password:(!*)')
-    _ = child.sendline(base64.b64decode(passwd)[:-1])    #base64解码后多一个回车键符，需要剪掉一位
-    child.expect(pexpect.EOF)
+    try:
+        child.expect('(!*)password:(!*)')
+        _ = child.sendline(base64.b64decode(passwd)[:-1])    #base64解码后多一个回车键符，需要剪掉一位
+    except pexpect.EOF:
+        print("pexpect.EOF")
+        child.close(force=True)
+        return
+    except pexpect.TIMEOUT:
+        print("pexpect.TIMEOUT")
+        child.close(force=True)
+        return
+
+    child.expect(pexpect.EOF,timeout=60)
     if mutex.acquire():
         print "-----------------------------------------------------------------------------------------"
         print "# host:"+host

@@ -272,8 +272,18 @@ class remote_shell(cmd.Cmd):
         #signal.signal(signal.SIGWINCH, self.sigwinch_passthrough)
         winsize = self.getwinsize()
         child.setwinsize(winsize[0], winsize[1])
-        child.expect('(!*)password:(!*)')
-        _ = child.sendline(base64.b64decode(password)[:-1]) #base64解码后多一个回车键符，需要剪掉一位
+        try:
+            child.expect('(!*)password:(!*)')
+            _ = child.sendline(base64.b64decode(password)[:-1]) #base64解码后多一个回车键符，需要剪掉一位
+        except pexpect.EOF:
+            print("pexpect.EOF")
+            child.close(force=True)
+            return
+        except pexpect.TIMEOUT:
+            print("pexpect.TIMEOUT")
+            child.close(force=True)
+            return
+
         child.interact()
         child.expect(pexpect.EOF)
         child.close(force=True)
