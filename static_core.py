@@ -117,8 +117,8 @@ class CPStack:
         line = "-"*128
         i = ""
         for v in mapStatic:
-            if i != v[1]:
-                print("="*128)
+            #if i != v[1]:
+            #    print("="*128)
             i = v[1]
             print "{}{:-^128}".format(v[0], "此类core总计: {} 个".format(v[1]))
         print "="*128
