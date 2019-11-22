@@ -33,7 +33,7 @@ import socket
 cfg = ConfigParser.ConfigParser()
 
 #界面显示配置定义，这块可以根据需要调整
-COLUMN_NUM = 4
+COLUMN_NUM = 3
 HOST_WIDTH = 12
 USER_WIDTH = 12
 IP_WIDTH = 16
@@ -95,39 +95,37 @@ class remote_shell(cmd.Cmd):
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
         print("*"+"{: ^{}}".format("Welcome to using scripts for remoting login",(COLUMN_WIDTH+1)*COLUMN_NUM-1)+"*")  #{}内嵌{}
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
-        #array1 = {}
+
         hostlist = []
         for d,h in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=False):   #domain
             if(self.domain != "all" and d != self.domain):
                 continue
-            #hostlist = []
             iNum=0
-            hostlist.append("*"+"\033[32;1m{: ^{}}\033[0m".format(d, COLUMN_WIDTH))     #{: ^38}, 38宽度补空格对齐
-            hostlist.append("*"+"{: ^{}}".format(" -"*(COLUMN_WIDTH/2), COLUMN_WIDTH))
-            #hostlist.append("*"+" HOST.NO    用户        IP列表        ")
-            hostlist.append("*"+" {: ^{}}{: ^{}}{: ^{}}".format("HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH+2, "IP列表", IP_WIDTH+2))
                 
             for i in self.mapDomainHost[d]:
+                if(iNum % BLOCK_NUM == 0):
+                    hostlist.append("*"+"\033[32;1m{: ^{}}\033[0m".format(d, COLUMN_WIDTH))     #{: ^38}, 38宽度补空格对齐
+                    hostlist.append("*"+"{: ^{}}".format(" -"*(COLUMN_WIDTH/2), COLUMN_WIDTH))
+                    hostlist.append("*"+" {: <{}}{: ^{}}{: ^{}}".format("HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH+2, "IP列表", IP_WIDTH+2))
                 str1 = "*"+" \033[36;1m{: <{}}\033[0m{: ^{}}{: ^{}}".format(i, HOST_WIDTH-1, cfg.get(i,"user"), USER_WIDTH, cfg.get(i,"host"), IP_WIDTH)
                 hostlist.append(str1) #host
                 iNum = iNum + 1
                 if(iNum % BLOCK_NUM == 0):
                     hostlist.append("*"+"*"*COLUMN_WIDTH)
-                    hostlist.append("*"+"\033[32;1m{: ^{}}\033[0m".format(d, COLUMN_WIDTH))     #{: ^38}, 38宽度补空格对齐
-                    hostlist.append("*"+"{: ^{}}".format(" -"*(COLUMN_WIDTH/2), COLUMN_WIDTH))
-                    #hostlist.append("*"+" HOST.NO    用户        IP列表        ")
-                    hostlist.append("*"+" {: ^{}}{: ^{}}{: ^{}}".format("HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH+2, "IP列表", IP_WIDTH+2))
+  
             while( (iNum % BLOCK_NUM) <> 0):    #补足BLOCK_NUM
                 hostlist.append("*"+"{: ^{}}".format(" ", COLUMN_WIDTH))
                 iNum = iNum + 1
-            hostlist.append("*"+"*"*COLUMN_WIDTH)
 
+            if h % BLOCK_NUM <> 0:  #不是BLOCK_NUM的倍数时，才需要补一行:"*"+"*"*COLUMN_WIDTH
+                hostlist.append("*"+"*"*COLUMN_WIDTH)
+        
         #补足COLUMN_NUM的倍数的数据块, 其中为固定字符的4行
         iBlockNum = (len(hostlist)/(BLOCK_NUM+4))%COLUMN_NUM
         while(iBlockNum % COLUMN_NUM <> 0):
             hostlist.append("*"+"{: ^{}}".format(" ", COLUMN_WIDTH))     #{: ^38}, 38宽度补空格对齐
-            hostlist.append("*"+" - - - - - - - - - - - - - - - - - - -")
-            hostlist.append("*"+" HOST.NO    用户        IP列表        ")
+            hostlist.append("*"+"{: ^{}}".format(" -"*(COLUMN_WIDTH/2), COLUMN_WIDTH))
+            hostlist.append("*"+" {: <{}}{: ^{}}{: ^{}}".format("HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH+2, "IP列表", IP_WIDTH+2))
             hostlist.append("*"+"{: ^{}}".format(" ", COLUMN_WIDTH))
             iNum1 = 1
             while( iNum1 % BLOCK_NUM <> 0):    #补足BLOCK_NUM
@@ -135,7 +133,7 @@ class remote_shell(cmd.Cmd):
                 iNum1 = iNum1 + 1
             hostlist.append("*"+"*"*COLUMN_WIDTH)
             iBlockNum = iBlockNum + 1
-
+        
         #    array1[d] = hostlist
         #print hostlist
         hostlist_size = len(hostlist)
