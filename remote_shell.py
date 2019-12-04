@@ -90,7 +90,7 @@ class remote_shell(cmd.Cmd):
         print
         return 1
 
-    # 采用按块显示的方式，每个块固定BLOCK_NUM决定块里有多个主机，默认为10台
+    # 采用按块显示的方式，每个块固定BLOCK_NUM决定块里有多个主机，默认为10条
     def refresh_menu(self):
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
         print("*"+"{: ^{}}".format("Welcome to using scripts for remoting login",(COLUMN_WIDTH+1)*COLUMN_NUM-1)+"*")  #{}内嵌{}
@@ -113,22 +113,22 @@ class remote_shell(cmd.Cmd):
                 if(iNum % BLOCK_NUM == 0):
                     hostlist.append("*"+"*"*COLUMN_WIDTH)
   
-            while( (iNum % BLOCK_NUM) <> 0):    #补足BLOCK_NUM
+            while( (iNum % BLOCK_NUM) != 0):    #补足BLOCK_NUM
                 hostlist.append("*"+"{: ^{}}".format(" ", COLUMN_WIDTH))
                 iNum = iNum + 1
 
-            if h % BLOCK_NUM <> 0:  #不是BLOCK_NUM的倍数时，才需要补一行:"*"+"*"*COLUMN_WIDTH
+            if h % BLOCK_NUM != 0:  #不是BLOCK_NUM的倍数时，才需要补一行:"*"+"*"*COLUMN_WIDTH
                 hostlist.append("*"+"*"*COLUMN_WIDTH)
         
         #补足COLUMN_NUM的倍数的数据块, 其中为固定字符的4行
         iBlockNum = (len(hostlist)/(BLOCK_NUM+4))%COLUMN_NUM
-        while(iBlockNum % COLUMN_NUM <> 0):
+        while(iBlockNum % COLUMN_NUM != 0):
             hostlist.append("*"+"{: ^{}}".format(" ", COLUMN_WIDTH))     #{: ^38}, 38宽度补空格对齐
             hostlist.append("*"+"{: ^{}}".format(" -"*(COLUMN_WIDTH/2), COLUMN_WIDTH))
             hostlist.append("*"+" {: <{}}{: ^{}}{: ^{}}".format("HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH+2, "IP列表", IP_WIDTH+2))
             hostlist.append("*"+"{: ^{}}".format(" ", COLUMN_WIDTH))
             iNum1 = 1
-            while( iNum1 % BLOCK_NUM <> 0):    #补足BLOCK_NUM
+            while( iNum1 % BLOCK_NUM != 0):    #补足BLOCK_NUM
                 hostlist.append("*"+"{: ^{}}".format(" ", COLUMN_WIDTH))
                 iNum1 = iNum1 + 1
             hostlist.append("*"+"*"*COLUMN_WIDTH)

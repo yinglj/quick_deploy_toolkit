@@ -27,7 +27,7 @@ class CPStack:
         self.listPstackFiles = []
         self.listStat = []
         self.totalThreads = 0
-        self.listIgnores = {"billing billing": 0, "exe =": 0}
+        self.listIgnores = {"billing billing":0, "exe =":0, "host:":0, "Connection":0}
         self.backtrace = ""
         self.mapStatic = {}
 
@@ -96,13 +96,15 @@ class CPStack:
         else:
             line1 = split1[0]
         split3 = line1.split(" ")
-        split3 = [x for x in split3 if x]   #删除空串
+        split3 = [x for x in split3 if x]
         if len(split3) > 3:
             funcName = "{:0>3} {} @ {}".format(split3[0][1:], split3[1], split3[-1])
             self.backtrace =  self.backtrace + funcName
-        else:
+        elif len(split3) > 1:
             funcName = "{:0>3} {} @ {}".format(split3[0][1:], split3[1], split3[-1])
             self.backtrace =  self.backtrace + funcName
+        else:
+            return
         #if self.mapStatic.get(funcName) != None:
         #    self.mapStatic[funcName] += 1
         #else:
@@ -111,20 +113,20 @@ class CPStack:
     def showResult(self):
 
         # print self.mapStatic;
-        mapStatic = sorted(self.mapStatic.items(), key=lambda d: d[1])  #
-        mapStatic = sorted(mapStatic, key=lambda d: d[0])  #
-        mapStatic = sorted(mapStatic, key=lambda d: d[1])  #
+        #mapStatic = sorted(self.mapStatic.items(), key=lambda d: d[1])  #
+        #mapStatic = sorted(mapStatic, key=lambda d: d[0], reverse=True)  #
+        mapStatic = sorted(self.mapStatic.items(), key=lambda d: d[1], reverse=True)  #
         line = "-"*128
         i = ""
         for v in mapStatic:
-            #if i != v[1]:
-            #    print("="*128)
+            if i != v[1]:
+                print("="*128)
             i = v[1]
             print "{}{:-^128}".format(v[0], "此类core总计: {} 个".format(v[1]))
         print "="*128
-        for v in self.listIgnores:
-            print self.listIgnores[v], "\t", v
-        print self.totalThreads, "\t", "total threads"
+        #for v in self.listIgnores:
+        #    print self.listIgnores[v], "\t", v
+        #print self.totalThreads, "\t", "total threads"
 
 
 def Usage(command):

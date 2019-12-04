@@ -160,10 +160,6 @@ if __name__ == '__main__':
     parser.add_argument('--ip', default='', help='--ip host_ip')
     args, unknowns = parser.parse_known_args()
     command = ' '.join(unknowns).replace("\"", "\\\"").replace("$", "\\$")#.replace("\'", "\\'")
-    if command[-1]=="&":    #命令行加了&，解析成后台命令
-        background = "-f -n"
-    else:
-        background = ""
     #print command
     #print args
     #print "unknowns:{}".format(unknowns)
@@ -174,6 +170,11 @@ if __name__ == '__main__':
         try:
             #command=""
             #print len(sys.argv)
+            if command[-1]=="&":    #命令行加了&，解析成后台命令
+                background = "-f -n"
+            else:
+                background = ""
+    
             run_command(args.domain, args.ip, command)
             time.sleep(0)
         except KeyboardInterrupt as e:
