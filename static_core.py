@@ -27,9 +27,12 @@ class CPStack:
         self.listPstackFiles = []
         self.listStat = []
         self.totalThreads = 0
-        self.listIgnores = {"billing billing":0, "exe =":0, "host:":0, "Connection":0}
+        self.listIgnores = {"billing billing":0, "exe =":0, "host:":0, 
+                            "Connection":0, "static_core.txt":0, "total threads":0}
+        self.listShowIgnores = {"exe =":[]} #用于显示明细
         self.backtrace = ""
         self.mapStatic = {}
+        self.mapBusiStatic = {}
 
     def analyseAllFiles(self):
         for i in range(1, len(sys.argv)):
@@ -58,6 +61,10 @@ class CPStack:
                 lines = ""
                 continue
             ignore = False
+            for v in self.listShowIgnores:
+                if line.find(v) != -1:
+                    self.listShowIgnores[v].append(line)
+
             for v in self.listIgnores:
                 if line.find(v) != -1:
                     stat = 2
@@ -114,20 +121,42 @@ class CPStack:
 
         # print self.mapStatic;
         #mapStatic = sorted(self.mapStatic.items(), key=lambda d: d[1])  #
-        #mapStatic = sorted(mapStatic, key=lambda d: d[0], reverse=True)  #
-        mapStatic = sorted(self.mapStatic.items(), key=lambda d: d[1], reverse=True)  #
+        #mapStatic = sorted(mapStatic, key=lambda d: d[0], reverse=True)  # 按照key进行排序
+        mapBusiStatic = {}
+        print "{:=^128}".format("按业务名称")
+        for v in self.listShowIgnores:
+            for w in sorted(self.listShowIgnores[v]):
+                if len(w.split('/run/')) >= 2:
+                    busi = filter(lambda ch: (ch >= 'a' and ch <= 'z') or (ch >= 'A' and ch <= 'Z') or ch == '_', w.split('/run/')[1])
+                    if busi != "":
+                        if self.mapBusiStatic.get(busi) != None:
+                            self.mapBusiStatic[busi] += 1
+                        else:
+                            self.mapBusiStatic[busi] = 1
+        mapBusiStatic = sorted(self.mapBusiStatic.items(), key=lambda d: d[0], reverse=True)  # 按照value进行排序
+        line = "-"*128
+        i = ""
+        for v in mapBusiStatic:
+            #if i != v[1]:
+            #    print("="*128)
+            #i = v[1]
+            print "{: <40}{: >32}".format(v[0], "总计: {: >3} 个".format(v[1]))
+        #print "="*128
+        
+        print "{:=^128}".format("按core信息")
+        mapStatic = sorted(self.mapStatic.items(), key=lambda d: d[1], reverse=True)  # 按照d[0]->key, d[1]->value进行排序 
         line = "-"*128
         i = ""
         for v in mapStatic:
-            if i != v[1]:
-                print("="*128)
-            i = v[1]
-            print "{}{:-^128}".format(v[0], "此类core总计: {} 个".format(v[1]))
+            #if i != v[1]:
+            #    print("="*128)
+            #i = v[1]
+            print "{}{:-^128}".format(v[0], "上面这种core总计: {} 个".format(v[1]))
         print "="*128
         #for v in self.listIgnores:
         #    print self.listIgnores[v], "\t", v
         #print self.totalThreads, "\t", "total threads"
-
+        
 
 def Usage(command):
     print "usage:" + command + " [file]"
