@@ -133,7 +133,7 @@ class CPStack:
                             self.mapBusiStatic[busi] += 1
                         else:
                             self.mapBusiStatic[busi] = 1
-        mapBusiStatic = sorted(self.mapBusiStatic.items(), key=lambda d: d[0], reverse=True)  # 按照value进行排序
+        mapBusiStatic = sorted(self.mapBusiStatic.items(), key=lambda d: d[0], reverse=False)  # 按照value进行排序
         line = "-"*128
         i = ""
         for v in mapBusiStatic:
