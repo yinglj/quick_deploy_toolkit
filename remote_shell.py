@@ -41,6 +41,12 @@ COLUMN_WIDTH = HOST_WIDTH + USER_WIDTH + IP_WIDTH
 BLOCK_NUM = 10
 #界面显示配置
 
+
+import glob
+
+import readline
+readline.set_completer_delims(' \t\n')
+
 class remote_shell(cmd.Cmd):
 
     def __init__(self, host):
@@ -80,7 +86,7 @@ class remote_shell(cmd.Cmd):
             self.quit()
         except:
             pass
-
+        
     def do_prompt(self, line):
         '''Set command prompt, eg. \"prompt remote shell\"'''
         self.prompt = '\033[36;1m{} {} {} remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
@@ -97,7 +103,7 @@ class remote_shell(cmd.Cmd):
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
 
         hostlist = []
-        for d,h in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=False):   #domain
+        for d,h in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=False):   #domain, 按主机数量增序排列
             if(self.domain != "all" and d != self.domain):
                 continue
             iNum=0
@@ -208,6 +214,74 @@ class remote_shell(cmd.Cmd):
                 print("set host host123\nset host 10.10.13.158\nset domain mdb")
         return False
 
+    def complete_set(self, text, line, begidx, endidx):
+        completions_set = [
+            'host',
+            'domain'
+        ]
+        
+        mline = line.partition(' ')[-1]
+        if mline != "":
+            for d,h in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=False):   #domain, 按主机数量增序排列
+                if(self.domain != "all" and d != self.domain):
+                    completions_set.append("domain "+d)
+                    continue
+                iNum=0
+                completions_set.append("domain "+d)
+                for i in self.mapDomainHost[d]:
+                    completions_set.append("host "+i)
+                    
+        offs = len(mline) - len(text)
+        return [s[offs:] for s in completions_set if s.startswith(mline)]
+    
+    #重写cmd类的completedefault
+    def completedefault(self, text, line, begidx, endidx):
+        return self.completenames(text, line, begidx, endidx)
+    
+    #重写cmd类的completenames
+    def completenames(self, path, line, begidx, endidx):
+        #print("path={}, line={}, begidx={}, endidx={}".format(path, line, begidx, endidx))
+        #if path == "":
+        #    dotext = 'do_'+ path
+        #    return [a[3:] for a in self.get_names() if a.startswith(dotext)]
+        completions = []
+        if path.partition(' ')[-1] == "" and len(line.split(" ")) == 1:
+            for d,h in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=False):   #domain, 按主机数量增序排列
+                if(self.domain != "all" and d != self.domain):
+                    continue
+                iNum=0
+                #completions.append("domain "+d)
+                for i in self.mapDomainHost[d]:
+                    if i.startswith(path):
+                        completions.append(i)
+            return completions
+        if path[0]=='~':
+            path = os.path.expanduser('~')+path[1:]
+        if os.path.isdir(path):
+            return glob.glob(os.path.join(path, '*'))
+        completions = glob.glob(path+'*')
+
+        if len(completions) == 0: #不是目录文件的情况下，返回候选命令
+            
+
+            bin_path = os.environ.get("PATH").split(":")
+            for i in bin_path:
+                completions = completions + [(s.split('/'))[-1] for s in glob.glob(i+"/"+path+"*")]
+        return completions
+
+    def _complete_path(self, path):
+        if path[0]=='~':
+            path = os.path.expanduser('~')+path[1:]
+        if os.path.isdir(path):
+            return glob.glob(os.path.join(path, '*'))
+        completions = glob.glob(path+'*')
+
+        if len(completions) == 0: #不是目录文件的情况下，返回候选命令
+            bin_path = os.environ.get("PATH").split(":")
+            for i in bin_path:
+                completions = completions + [(s.split('/'))[-1] for s in glob.glob(i+"/"+path+"*")]
+        return completions
+
     def do_show(self, line):
         '''show the domain and host information, eg. show.'''
         print("domain={}, host={}\n".format(self.domain, self.host))
@@ -259,6 +333,10 @@ class remote_shell(cmd.Cmd):
             self.remote_interactive(line)
             return
         self.remote_cmd(self.host, line)
+    
+    #tab自动补齐shell命令的参数
+    def complete_shell(self, text, line, start_idx, end_idx):
+        return self._complete_path(text)
 
     def do_run(self, line):
         '''Execute the rest of the line as a shell command, eg. \'run ls\', \'run pwd\'.'''
