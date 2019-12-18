@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#coding=utf-8
+# -*- coding: utf-8 -*-
 
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2016 project AutomicDeploy
@@ -105,7 +105,8 @@ def init_command(domain_config, spec_host, command):
         thread.join()
 
 def onethread_run_ssh(user,password,host,port,workdir,command):
-    spec_cmd = "ssh -t -p {} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no {} {}@{} ".format(port, background, user, host)
+    #spec_cmd = "ssh -t -p {} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no {} {}@{} ".format(port, background, user, host)
+    spec_cmd = "ssh -p {} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no {} {}@{} ".format(port, background, user, host)
     spec_cmd += command
     #print "spec_cmd:"+spec_cmd
     run_ssh(host, spec_cmd, password)
@@ -130,7 +131,7 @@ def run_ssh(host, cmd, passwd):
     child.expect(pexpect.EOF,timeout=60)
     if mutex.acquire():
         print "-----------------------------------------------------------------------------------------"
-        print "# host:"+host
+        print "# host:\033[36;1m{}\033[0m".format(host)
         print "-----------------------------------------------------------------------------------------",
         print child.before,
 	mutex.release()
