@@ -254,7 +254,6 @@ class remote_shell(cmd.Cmd):
                 for i in self.mapDomainHost[d]:
                     if i.startswith(path):
                         completions.append(i)
-            return completions
         if path[0]=='~':
             path = os.path.expanduser('~')+path[1:]
         if os.path.isdir(path):
@@ -262,14 +261,12 @@ class remote_shell(cmd.Cmd):
         completions = glob.glob(path+'*')
 
         if len(completions) == 0: #不是目录文件的情况下，返回候选命令
-            
-
             bin_path = os.environ.get("PATH").split(":")
             for i in bin_path:
                 completions = completions + [(s.split('/'))[-1] for s in glob.glob(i+"/"+path+"*")]
         return completions
 
-    def _complete_path(self, path):
+    def _complete_path(self, path, line, start_idx, end_idx):
         if path[0]=='~':
             path = os.path.expanduser('~')+path[1:]
         if os.path.isdir(path):
@@ -336,7 +333,7 @@ class remote_shell(cmd.Cmd):
     
     #tab自动补齐shell命令的参数
     def complete_shell(self, text, line, start_idx, end_idx):
-        return self._complete_path(text)
+        return self._complete_path(text, line, start_idx, end_idx)
 
     def do_run(self, line):
         '''Execute the rest of the line as a shell command, eg. \'run ls\', \'run pwd\'.'''
