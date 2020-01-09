@@ -59,7 +59,7 @@ class remote_shell(cmd.Cmd):
         self.host = host
         self.config_file = sys.path[0]+'/host.cfg'
         self.domain = "all"
-        self.prompt = '\033[36;1m{} {} {} remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
+        self.prompt = '\033[36;1m{0} {1} {2} remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
         self.mapDomainHost = defaultdict(list)
         cfg.read(self.config_file)
         
@@ -99,7 +99,7 @@ class remote_shell(cmd.Cmd):
     # 采用按块显示的方式，每个块固定BLOCK_NUM决定块里有多个主机，默认为10条
     def refresh_menu(self):
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
-        print("*"+"{: ^{}}".format("Welcome to using scripts for remoting login",(COLUMN_WIDTH+1)*COLUMN_NUM-1)+"*")  #{}内嵌{}
+        print("*"+"{0: ^{1}}".format("Welcome to using scripts for remoting login",(COLUMN_WIDTH+1)*COLUMN_NUM-1)+"*")  #{}内嵌{}
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
 
         hostlist = []
@@ -108,19 +108,19 @@ class remote_shell(cmd.Cmd):
                 continue
             iNum=0
                 
-            for i in self.mapDomainHost[d]:
+            for i in sorted(self.mapDomainHost[d]):
                 if(iNum % BLOCK_NUM == 0):
-                    hostlist.append("*"+"\033[32;1m{: ^{}}\033[0m".format(d, COLUMN_WIDTH))     #{: ^38}, 38宽度补空格对齐
-                    hostlist.append("*"+"{: ^{}}".format(" -"*(COLUMN_WIDTH/2), COLUMN_WIDTH))
-                    hostlist.append("*"+" {: <{}}{: ^{}}{: ^{}}".format("HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH+2, "IP列表", IP_WIDTH+2))
-                str1 = "*"+" \033[36;1m{: <{}}\033[0m{: ^{}}{: ^{}}".format(i, HOST_WIDTH-1, cfg.get(i,"user"), USER_WIDTH, cfg.get(i,"host"), IP_WIDTH)
+                    hostlist.append("*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH))     #{: ^38}, 38宽度补空格对齐
+                    hostlist.append("*"+"{0: ^{1}}".format(" -"*(COLUMN_WIDTH/2), COLUMN_WIDTH))
+                    hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH+2, "IP列表", IP_WIDTH+2))
+                str1 = "*"+" \033[36;1m{0: <{1}}\033[0m{2: ^{3}}{4: ^{5}}".format(i, HOST_WIDTH-1, cfg.get(i,"user"), USER_WIDTH, cfg.get(i,"host"), IP_WIDTH)
                 hostlist.append(str1) #host
                 iNum = iNum + 1
                 if(iNum % BLOCK_NUM == 0):
                     hostlist.append("*"+"*"*COLUMN_WIDTH)
   
             while( (iNum % BLOCK_NUM) != 0):    #补足BLOCK_NUM
-                hostlist.append("*"+"{: ^{}}".format(" ", COLUMN_WIDTH))
+                hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
                 iNum = iNum + 1
 
             if h % BLOCK_NUM != 0:  #不是BLOCK_NUM的倍数时，才需要补一行:"*"+"*"*COLUMN_WIDTH
@@ -129,13 +129,13 @@ class remote_shell(cmd.Cmd):
         #补足COLUMN_NUM的倍数的数据块, 其中为固定字符的4行
         iBlockNum = (len(hostlist)/(BLOCK_NUM+4))%COLUMN_NUM
         while(iBlockNum % COLUMN_NUM != 0):
-            hostlist.append("*"+"{: ^{}}".format(" ", COLUMN_WIDTH))     #{: ^38}, 38宽度补空格对齐
-            hostlist.append("*"+"{: ^{}}".format(" -"*(COLUMN_WIDTH/2), COLUMN_WIDTH))
-            hostlist.append("*"+" {: <{}}{: ^{}}{: ^{}}".format("HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH+2, "IP列表", IP_WIDTH+2))
-            hostlist.append("*"+"{: ^{}}".format(" ", COLUMN_WIDTH))
+            hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))     #{: ^38}, 38宽度补空格对齐
+            hostlist.append("*"+"{0: ^{1}}".format(" -"*(COLUMN_WIDTH/2), COLUMN_WIDTH))
+            hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH+2, "IP列表", IP_WIDTH+2))
+            hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
             iNum1 = 1
             while( iNum1 % BLOCK_NUM != 0):    #补足BLOCK_NUM
-                hostlist.append("*"+"{: ^{}}".format(" ", COLUMN_WIDTH))
+                hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
                 iNum1 = iNum1 + 1
             hostlist.append("*"+"*"*COLUMN_WIDTH)
             iBlockNum = iBlockNum + 1
@@ -148,24 +148,24 @@ class remote_shell(cmd.Cmd):
                 line=""
                 for j in range(COLUMN_NUM): #行
                     line = line + hostlist[layer*COLUMN_NUM*(BLOCK_NUM+4)+(BLOCK_NUM+4)*j+i]
-                if(line != ("*"+"{: ^{}}".format(" ", COLUMN_WIDTH))*COLUMN_NUM):  #空行
+                if(line != ("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))*COLUMN_NUM):  #空行
                     print line+"*"
         help = []
-        help.append("{: <{}}".format(" 帮  助 $  输入HOST.NO,登录对应主机",COLUMN_WIDTH+10))   #10为里面包含了10个汉字
-        help.append("{: <{}}".format(" exit: 退出 | set domain: 切换主机域",COLUMN_WIDTH+7))  #7为里面包含了7个汉字
+        help.append("{0: <{1}}".format(" 帮  助 $  输入HOST.NO,登录对应主机",COLUMN_WIDTH+10))   #10为里面包含了10个汉字
+        help.append("{0: <{1}}".format(" exit: 退出 | set domain: 切换主机域",COLUMN_WIDTH+7))  #7为里面包含了7个汉字
         for i in range(COLUMN_NUM - 3): #前面的两行help
             help.append(" "*COLUMN_WIDTH)
             i= i+1
         help_line = "*"
         #n = 0
         for l in help:
-            help_line = help_line + "{: <{}}".format(l, COLUMN_WIDTH);
+            help_line = help_line + "{0: <{1}}".format(l, COLUMN_WIDTH);
             help_line = help_line + "|"
-        help_line = help_line + " 当前域：\033[31;1m{: <10} {: >15}\033[0m".format(self.domain, self.host) + " "*(COLUMN_WIDTH-35) + "*"
+        help_line = help_line + " 当前域：\033[31;1m{0: <10} {1: >15}\033[0m".format(self.domain, self.host) + " "*(COLUMN_WIDTH-35) + "*"
         print(help_line)
     
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
-        self.prompt = '\033[36;1m{} {} {} remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
+        self.prompt = '\033[36;1m{0} {1} {2} remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
     
     def emptyline(self):
         self.refresh_menu()
@@ -186,7 +186,7 @@ class remote_shell(cmd.Cmd):
         '''set the special domain or set the host or set the ip.\neg. set domain mdb\n    set host host158\n    set ip 10.10.13.158'''
         parse_temp = line.split()
         if len(parse_temp) < 1:
-            print("domain={}, host={}".format(self.domain, self.host))
+            print("domain={0}, host={1}".format(self.domain, self.host))
             print("Please input set domain|host|ip")
         else:
             if parse_temp[0]=='host' or parse_temp[0]=='ip':
@@ -208,7 +208,7 @@ class remote_shell(cmd.Cmd):
                         self.domain = parse_temp[1]
                         self.host = ""
                     #if not os.path.exists(parse_temp[1]):
-                    #    print("file {} is not exist.".format(parse_temp[1]))
+                    #    print("file {0} is not exist.".format(parse_temp[1]))
                 self.refresh_menu()
             else:
                 print("set host host123\nset host 10.10.13.158\nset domain mdb")
@@ -240,7 +240,7 @@ class remote_shell(cmd.Cmd):
     
     #重写cmd类的completenames
     def completenames(self, path, line, begidx, endidx):
-        #print("path={}, line={}, begidx={}, endidx={}".format(path, line, begidx, endidx))
+        #print("path={0}, line={1}, begidx={2}, endidx={3}".format(path, line, begidx, endidx))
         #if path == "":
         #    dotext = 'do_'+ path
         #    return [a[3:] for a in self.get_names() if a.startswith(dotext)]
@@ -258,7 +258,7 @@ class remote_shell(cmd.Cmd):
             path = os.path.expanduser('~')+path[1:]
         if os.path.isdir(path):
             return glob.glob(os.path.join(path, '*'))
-        completions = glob.glob(path+'*')
+        completions = completions + glob.glob(path+'*')
 
         if len(completions) == 0: #不是目录文件的情况下，返回候选命令
             bin_path = os.environ.get("PATH").split(":")
@@ -281,7 +281,7 @@ class remote_shell(cmd.Cmd):
 
     def do_show(self, line):
         '''show the domain and host information, eg. show.'''
-        print("domain={}, host={}\n".format(self.domain, self.host))
+        print("domain={0}, host={1}\n".format(self.domain, self.host))
         return False
 
     def do_quit(self, line):
@@ -361,7 +361,7 @@ class remote_shell(cmd.Cmd):
         password = cfg.get(host, "password")
         ip = cfg.get(host, "host")
         port = cfg.get(host, "port")
-        cmd = "ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {} {}@{}".format(port, user, ip)
+        cmd = "ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {0} {1}@{2}".format(port, user, ip)
         print cmd
         child = pexpect.spawn(cmd)
         #signal.signal(signal.SIGWINCH, self.sigwinch_passthrough)
@@ -386,12 +386,12 @@ class remote_shell(cmd.Cmd):
     def remote_cmd(self, host, line):
         line = line.replace("\"", "\\\"").replace("$", "\\$").replace("\'", "\\'").replace("`", "\\`")
         line = "\""+line+"\""
-        #print "line:{}".format(line)
+        #print "line:{0}".format(line)
         if self.host != "":
-            szCmd = "{}/remote_cmd.py --domain {} --ip {} {}".format(os.path.dirname(os.path.realpath(__file__)), 
+            szCmd = "{0}/remote_cmd.py --domain {1} --ip {2} {3}".format(os.path.dirname(os.path.realpath(__file__)), 
                 self.domain, self.host, line)
         else:
-            szCmd = "{}/remote_cmd.py --domain {} {}".format(os.path.dirname(os.path.realpath(__file__)), 
+            szCmd = "{0}/remote_cmd.py --domain {1} {2}".format(os.path.dirname(os.path.realpath(__file__)), 
                 self.domain, line)
         #print szCmd
         command = subprocess.Popen(szCmd, shell=True, stdout=subprocess.PIPE)
