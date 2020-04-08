@@ -302,8 +302,8 @@ class remote_shell(cmd.Cmd):
     def onecmd(self, line):
         '''Execute the rest of the line as a shell command, eg. \'!ls\', \'shell pwd\'.'''
         if line == "" or line == "bye" or line == "exit" or line == "by" or line == "quit" \
-            or "help" in line or line == "EOF" or "shell" in line or "run" in line \
-            or "set" in line or "show" in line or line == "q":
+            or line.startswith("help") or line == "EOF" or line.startswith("shell") or line.startswith("run") \
+            or line.startswith("set") or line.startswith("show") or line == "q":
             return cmd.Cmd.onecmd(self, line)
         if line in cfg.sections():
             self.remote_interactive(line)
