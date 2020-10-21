@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # ---------------------------------------------------------------------------------------
@@ -15,12 +15,12 @@
 import sys
 import cmd
 import subprocess
-import time
-#import string
+#import time
+import string
 import os
 import pexpect
-import ConfigParser
-#import configparser
+#import ConfigParser
+import configparser
 from collections import Counter
 from collections import defaultdict
 import base64
@@ -32,7 +32,7 @@ import socket
 #todo add set variable to save domain, check host.cfg is existed while set domain.
 #todo add set variable to save host
 #todo show domain host
-cfg = ConfigParser.ConfigParser()
+cfg = configparser.ConfigParser()
 
 #界面显示配置定义，这块可以根据需要调整
 COLUMN_NUM = 3
@@ -46,10 +46,9 @@ BLOCK_NUM = 10
 import glob
 
 def str_count(str):
-    import string
     '''找出字符串中的中英文、空格、数字、标点符号个数'''
     count_en = count_dg = count_sp = count_zh = count_pu = 0
-    for s in str.decode( 'utf-8' ):
+    for s in str:
         # 英文
         if s in string.ascii_letters:
             count_en += 1
@@ -131,9 +130,9 @@ class remote_shell(cmd.Cmd):
                 
             for i in sorted(self.mapDomainHost[d]):
                 if(iNum % BLOCK_NUM == 0):
-                    hostlist.append("*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH+str_count(d)))     #{: ^38}, 38宽度补空格对齐
+                    hostlist.append("*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH-str_count(d)))     #{: ^38}, 38宽度补空格对齐
                     hostlist.append("*"+"{0: ^{1}}".format(" -"*(int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
-                    hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH+str_count("用户"), "IP列表", IP_WIDTH+str_count("IP列表")))
+                    hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH-str_count("用户"), "IP列表", IP_WIDTH-str_count("IP列表")))
                 str1 = "*"+" \033[36;1m{0: <{1}}\033[0m{2: ^{3}}{4: ^{5}}".format(i, HOST_WIDTH-1, cfg.get(i,"user"), USER_WIDTH, cfg.get(i,"host"), IP_WIDTH)
                 hostlist.append(str1) #host
                 iNum = iNum + 1
@@ -152,7 +151,7 @@ class remote_shell(cmd.Cmd):
         while(iBlockNum % COLUMN_NUM != 0):
             hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))     #{: ^38}, 38宽度补空格对齐
             hostlist.append("*"+"{0: ^{1}}".format(" -"*(int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
-            hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH+str_count("用户"), "IP列表", IP_WIDTH+str_count("IP列表")))
+            hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH-str_count("用户"), "IP列表", IP_WIDTH-str_count("IP列表")))
             hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
             iNum1 = 1
             while( iNum1 % BLOCK_NUM != 0):    #补足BLOCK_NUM
@@ -175,9 +174,9 @@ class remote_shell(cmd.Cmd):
         #help.append("{0: <{1}}".format(" 帮  助 $  输入HOST.NO,登录对应主机",COLUMN_WIDTH+10))   #10为里面包含了10个汉字
         #help.append("{0: <{1}}".format(" exit: 退出 | set domain: 切换主机域",COLUMN_WIDTH+7))  #7为里面包含了7个汉字
         temp_hint = " 帮  助 $  输入HOST.NO,登录对应主机"
-        help.append("{0: <{1}}".format(temp_hint,COLUMN_WIDTH+str_count(temp_hint)))   #10为里面包含了10个汉字
+        help.append("{0: <{1}}".format(temp_hint,COLUMN_WIDTH-str_count(temp_hint)))   #10为里面包含了10个汉字
         temp_hint = " exit: 退出 | set domain: 切换主机域"
-        help.append("{0: <{1}}".format(temp_hint,COLUMN_WIDTH+str_count(temp_hint)))  #7为里面包含了7个汉字
+        help.append("{0: <{1}}".format(temp_hint,COLUMN_WIDTH-str_count(temp_hint)))  #7为里面包含了7个汉字
         for i in range(COLUMN_NUM - 3): #前面的两行help
             help.append(" "*COLUMN_WIDTH)
             i= i+1
@@ -247,7 +246,7 @@ class remote_shell(cmd.Cmd):
         
         mline = line.partition(' ')[-1]
         if mline != "":
-            for d,h in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=False):   #domain, 按主机数量增序排列
+            for d,h in sorted(self.domain_list.items(),key=lambda dict:dict[1],reverse=False):   #domain, 按主机数量增序排列
                 if(self.domain != "all" and d != self.domain):
                     completions_set.append("domain "+d)
                     continue
@@ -271,7 +270,7 @@ class remote_shell(cmd.Cmd):
         #    return [a[3:] for a in self.get_names() if a.startswith(dotext)]
         completions = []
         if path.partition(' ')[-1] == "" and len(line.split(" ")) == 1:
-            for d,h in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=False):   #domain, 按主机数量增序排列
+            for d,h in sorted(self.domain_list.items(),key=lambda dict:dict[1],reverse=False):   #domain, 按主机数量增序排列
                 if(self.domain != "all" and d != self.domain):
                     continue
                 iNum=0
@@ -338,7 +337,7 @@ class remote_shell(cmd.Cmd):
                 print("can't support !vi or !vim")
                 return False
             command = subprocess.Popen(line[1:], shell=True, stdout=subprocess.PIPE)
-            print command.communicate()[0],
+            print(command.communicate()[0], end=' ')
             return False
 
         if len(line)>1 and line[0:2] == "vi":
@@ -414,10 +413,10 @@ class remote_shell(cmd.Cmd):
         line = "\""+line+"\""
         #print "line:{0}".format(line)
         if self.host != "":
-            szCmd = "{0}/remote_cmd.py --domain {1} --ip {2} {3}".format(os.path.dirname(os.path.realpath(__file__)), 
+            szCmd = "{0}/remote_cmd3.py --domain {1} --ip {2} {3}".format(os.path.dirname(os.path.realpath(__file__)), 
                 self.domain, self.host, line)
         else:
-            szCmd = "{0}/remote_cmd.py --domain {1} {2}".format(os.path.dirname(os.path.realpath(__file__)), 
+            szCmd = "{0}/remote_cmd3.py --domain {1} {2}".format(os.path.dirname(os.path.realpath(__file__)), 
                 self.domain, line)
         #print(szCmd)
         command = subprocess.Popen(szCmd, shell=True, stdout=subprocess.PIPE)
@@ -425,15 +424,15 @@ class remote_shell(cmd.Cmd):
             out = command.stdout.readline()
             if out.decode() == '':
                 break
-            print out.decode(),
+            print(out.decode(), end='')
         #print command.communicate()[0],
 
 if __name__ == '__main__':
-        #* for add current dir to LD_LIBRARY_PATH environment
+        #! for add current dir to LD_LIBRARY_PATH environment
         if os.path.dirname(os.path.realpath(__file__)) not in os.environ.get('LD_LIBRARY_PATH'):
             os.environ['LD_LIBRARY_PATH']=os.environ.get('LD_LIBRARY_PATH')+":"+os.path.dirname(os.path.realpath(__file__))
             os.execve(os.path.realpath(__file__), sys.argv, os.environ) #* rerun
-        
+
         import readline
         readline.set_completer_delims(' \t\n')
 

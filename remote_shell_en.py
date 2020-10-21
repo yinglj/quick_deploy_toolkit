@@ -34,35 +34,35 @@ import socket
 #todo show domain host
 cfg = ConfigParser.ConfigParser()
 
-#界面显示配置定义，这块可以根据需要调整
+#The interface displays the configuration definition, which can be adjusted as needed
 COLUMN_NUM = 3
 HOST_WIDTH = 12
 USER_WIDTH = 12
 IP_WIDTH = 16
 COLUMN_WIDTH = HOST_WIDTH + USER_WIDTH + IP_WIDTH
 BLOCK_NUM = 10
-#界面显示配置
+#Interface display configuration
 
 import glob
 
 def str_count(str):
     import string
-    '''找出字符串中的中英文、空格、数字、标点符号个数'''
+    '''Find out the number of Chinese and English, spaces, numbers, and punctuation marks in the string'''
     count_en = count_dg = count_sp = count_zh = count_pu = 0
     for s in str.decode( 'utf-8' ):
-        # 英文
+        # English
         if s in string.ascii_letters:
             count_en += 1
-        # 数字 
+        # digital
         elif s.isdigit():
             count_dg += 1
-        # 空格
+        # space
         elif s.isspace():
             count_sp += 1
-        # 中文，除了英文之外，剩下的字符认为就是中文
+        # Chinese
         elif s.isalpha():
             count_zh += 1
-        # 特殊字符
+        # Special Character
         else:
             count_pu += 1
     return count_zh
@@ -116,46 +116,46 @@ class remote_shell(cmd.Cmd):
         print
         return 1
 
-    # 采用按块显示的方式，每个块固定BLOCK_NUM决定块里有多个主机，默认为10条
+    # Display by block, each block fixed BLOCK_NUM determines that there are multiple hosts in the block, default is 10
     def refresh_menu(self):
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
-        print("*"+"{0: ^{1}}".format("Welcome to using scripts for remoting login",(COLUMN_WIDTH+1)*COLUMN_NUM-1)+"*")  #{}内嵌{}
+        print("*"+"{0: ^{1}}".format("Welcome to using scripts for remoting login",(COLUMN_WIDTH+1)*COLUMN_NUM-1)+"*")  #{}inline{}
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
 
         hostlist = []
-        #for d,h in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=False):   #domain, 按主机数量增序排列
-        for d,h in sorted(self.domain_list.items(),key=lambda dict:dict[1],reverse=False):   #domain, 按主机数量增序排列
+        #for d,h in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=False):   #domain, sorted by increasing number of hosts
+        for d,h in sorted(self.domain_list.items(),key=lambda dict:dict[1],reverse=False):   #domain, sorted by increasing number of hosts
             if(self.domain != "all" and d != self.domain):
                 continue
             iNum=0
                 
             for i in sorted(self.mapDomainHost[d]):
                 if(iNum % BLOCK_NUM == 0):
-                    hostlist.append("*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH+str_count(d)))     #{: ^38}, 38宽度补空格对齐
+                    hostlist.append("*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH+str_count(d)))     #{: ^38}, 38 width fill space alignment
                     hostlist.append("*"+"{0: ^{1}}".format(" -"*(int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
-                    hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH+str_count("用户"), "IP列表", IP_WIDTH+str_count("IP列表")))
+                    hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1, "login", USER_WIDTH+str_count("login"), "IP LIST", IP_WIDTH+str_count("IP LIST")))
                 str1 = "*"+" \033[36;1m{0: <{1}}\033[0m{2: ^{3}}{4: ^{5}}".format(i, HOST_WIDTH-1, cfg.get(i,"user"), USER_WIDTH, cfg.get(i,"host"), IP_WIDTH)
                 hostlist.append(str1) #host
                 iNum = iNum + 1
                 if(iNum % BLOCK_NUM == 0):
                     hostlist.append("*"+"*"*COLUMN_WIDTH)
   
-            while( (iNum % BLOCK_NUM) != 0):    #补足BLOCK_NUM
+            while( (iNum % BLOCK_NUM) != 0):    #Complement BLOCK_NUM
                 hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
                 iNum = iNum + 1
 
-            if h % BLOCK_NUM != 0:  #不是BLOCK_NUM的倍数时，才需要补一行:"*"+"*"*COLUMN_WIDTH
+            if h % BLOCK_NUM != 0:  #When it is not a multiple of BLOCK_NUM, you only need to add a line: "*"+"*"*COLUMN_WIDTH
                 hostlist.append("*"+"*"*COLUMN_WIDTH)
         
-        #补足COLUMN_NUM的倍数的数据块, 其中为固定字符的4行
+        #Complement the data block that is a multiple of COLUMN_NUM, where 4 lines of fixed characters
         iBlockNum = (len(hostlist)/(BLOCK_NUM+4))%COLUMN_NUM
         while(iBlockNum % COLUMN_NUM != 0):
-            hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))     #{: ^38}, 38宽度补空格对齐
+            hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))     #{: ^38}, 38 width fill space alignment
             hostlist.append("*"+"{0: ^{1}}".format(" -"*(int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
-            hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH+str_count("用户"), "IP列表", IP_WIDTH+str_count("IP列表")))
+            hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1, "Login", USER_WIDTH+str_count("Login"), "IP LIST", IP_WIDTH+str_count("IP LIST")))
             hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
             iNum1 = 1
-            while( iNum1 % BLOCK_NUM != 0):    #补足BLOCK_NUM
+            while( iNum1 % BLOCK_NUM != 0):    #Complement BLOCK_NUM
                 hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
                 iNum1 = iNum1 + 1
             hostlist.append("*"+"*"*COLUMN_WIDTH)
@@ -164,21 +164,19 @@ class remote_shell(cmd.Cmd):
         #    array1[d] = hostlist
         #print hostlist
         hostlist_size = len(hostlist)
-        for layer in range(int(hostlist_size/COLUMN_NUM/(BLOCK_NUM+4))): #层
-            for i in range(BLOCK_NUM+4):     #列
+        for layer in range(int(hostlist_size/COLUMN_NUM/(BLOCK_NUM+4))): #Layer
+            for i in range(BLOCK_NUM+4):     #Column
                 line=""
-                for j in range(COLUMN_NUM): #行
+                for j in range(COLUMN_NUM): #row
                     line = line + hostlist[layer*COLUMN_NUM*(BLOCK_NUM+4)+(BLOCK_NUM+4)*j+i]
-                if(line != ("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))*COLUMN_NUM):  #空行
+                if(line != ("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))*COLUMN_NUM):  #blank line
                     print(line+"*")
         help = []
-        #help.append("{0: <{1}}".format(" 帮  助 $  输入HOST.NO,登录对应主机",COLUMN_WIDTH+10))   #10为里面包含了10个汉字
-        #help.append("{0: <{1}}".format(" exit: 退出 | set domain: 切换主机域",COLUMN_WIDTH+7))  #7为里面包含了7个汉字
-        temp_hint = " 帮  助 $  输入HOST.NO,登录对应主机"
-        help.append("{0: <{1}}".format(temp_hint,COLUMN_WIDTH+str_count(temp_hint)))   #10为里面包含了10个汉字
-        temp_hint = " exit: 退出 | set domain: 切换主机域"
-        help.append("{0: <{1}}".format(temp_hint,COLUMN_WIDTH+str_count(temp_hint)))  #7为里面包含了7个汉字
-        for i in range(COLUMN_NUM - 3): #前面的两行help
+        temp_hint = " HELP $  INPUT HOST.NO TO LOGIN"
+        help.append("{0: <{1}}".format(temp_hint,COLUMN_WIDTH+str_count(temp_hint)))
+        temp_hint = " exit: quit | set domain: SWITCH DOMAIN"
+        help.append("{0: <{1}}".format(temp_hint,COLUMN_WIDTH+str_count(temp_hint)))
+        for i in range(COLUMN_NUM - 3): #The first two lines "help"
             help.append(" "*COLUMN_WIDTH)
             i= i+1
         help_line = "*"
@@ -186,7 +184,7 @@ class remote_shell(cmd.Cmd):
         for l in help:
             help_line = help_line + "{0: <{1}}".format(l, COLUMN_WIDTH-20);
             help_line = help_line + "|"
-        help_line = help_line + " 当前域：\033[31;1m{0: <10} {1: >15}\033[0m".format(self.domain, self.host) + " "*(COLUMN_WIDTH-35) + "*"
+        help_line = help_line + " Current domain：\033[31;1m{0: <10} {1: >12}\033[0m".format(self.domain, self.host) + "*"
         print(help_line)
     
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
@@ -429,11 +427,11 @@ class remote_shell(cmd.Cmd):
         #print command.communicate()[0],
 
 if __name__ == '__main__':
-        #* for add current dir to LD_LIBRARY_PATH environment
+        #! for add current dir to LD_LIBRARY_PATH environment
         if os.path.dirname(os.path.realpath(__file__)) not in os.environ.get('LD_LIBRARY_PATH'):
             os.environ['LD_LIBRARY_PATH']=os.environ.get('LD_LIBRARY_PATH')+":"+os.path.dirname(os.path.realpath(__file__))
             os.execve(os.path.realpath(__file__), sys.argv, os.environ) #* rerun
-        
+
         import readline
         readline.set_completer_delims(' \t\n')
 
