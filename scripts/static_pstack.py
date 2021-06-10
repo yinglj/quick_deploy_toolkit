@@ -11,9 +11,7 @@ pstack.py for Linux
 '''
 
 import os
-import cPickle
 import time
-import ConfigParser
 import re
 import string
 import logging
@@ -28,7 +26,7 @@ class CPStack:
         self.listStat = []
         self.totalThreads = 0
         self.listIgnores = {"billing billing" : 0, 
-                            "exe =":0, 
+                            "exe =":0,
                             "host:":0, 
                             "Connection":0, 
                             "static_core.txt":0, 
@@ -52,7 +50,7 @@ class CPStack:
     def analyseOneFile(self, pstack_file):
         if not os.path.exists(pstack_file):
             return True
-        f = file(pstack_file, 'r')
+        f = open(pstack_file, 'r')
         # if no mode is specified, 'r'ead mode is assumed by default
         stat = 0
         lines = ""
@@ -62,6 +60,8 @@ class CPStack:
             line = f.readline()
             if len(line) == 0:  # Zero length indicates EOF
                 break
+            if line == '\n':    #空行忽略
+                continue
             if line.find("(Thread ") != -1:
                 ignore = False  #每个线程重置一次
                 self.totalThreads += 1
@@ -93,6 +93,11 @@ class CPStack:
             #    print lines
 
                 # print line, # Notice comma to avoid automatic newline added by Python
+        if self.backtrace != "":
+            if self.mapStatic.get(self.backtrace) != None:
+                self.mapStatic[self.backtrace] += 1
+            else:
+                self.mapStatic[self.backtrace] = 1
         f.close()  # close the file
         return True
 
@@ -129,7 +134,7 @@ class CPStack:
         #mapStatic = sorted(self.mapStatic.items(), key=lambda d: d[1])  #
         #mapStatic = sorted(mapStatic, key=lambda d: d[0], reverse=True)  # 按照key进行排序
         mapBusiStatic = {}
-        print "{:=^128}".format("按业务名称")
+        print("{:=^128}".format("按业务名称"))
         for v in self.listShowIgnores:
             for w in sorted(self.listShowIgnores[v]):
                 if len(w.split('/run/')) >= 2:
@@ -146,10 +151,10 @@ class CPStack:
             #if i != v[1]:
             #    print("="*128)
             #i = v[1]
-            print "{: <40}{: >32}".format(v[0], "总计: {: >3} 个".format(v[1]))
+            print("{: <40}{: >32}".format(v[0], "总计: {: >3} 个".format(v[1])))
         #print "="*128
         
-        print "{:=^128}".format("按线程栈信息")
+        print("{:=^128}".format("按线程栈信息"))
         mapStatic = sorted(self.mapStatic.items(), key=lambda d: d[1], reverse=True)  # 按照d[0]->key, d[1]->value进行排序 
         line = "-"*128
         i = ""
@@ -157,17 +162,17 @@ class CPStack:
             #if i != v[1]:
             #    print("="*128)
             #i = v[1]
-            print "{}{:-^128}".format(v[0], "上面这种线程栈总计: {} 个".format(v[1]))
-        print "="*128
+            print("{}{:-^128}".format(v[0], "上面这种线程栈总计: {} 个".format(v[1])))
+        print("="*128)
         #for v in self.listIgnores:
         #    print self.listIgnores[v], "\t", v
         #print self.totalThreads, "\t", "total threads"
         
 
 def Usage(command):
-    print "usage:" + command + " [file]"
-    print "example: " + command + " *.pstack.*"
-    print "example: " + command + " 12345.pstack.1 12345.pstack.2"
+    print("usage:" + command + " [file]")
+    print("example: " + command + " *.pstack.*")
+    print("example: " + command + " 12345.pstack.1 12345.pstack.2")
 
 
 if __name__ == '__main__':
@@ -179,10 +184,10 @@ if __name__ == '__main__':
             client.analyseAllFiles()
             time.sleep(0)
         except KeyboardInterrupt as e:
-            print e
+            print(e)
         except IOError as e:
-            print e
+            print(e)
         except ValueError as e:
-            print e
+            print(e)
         finally:
             pass

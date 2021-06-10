@@ -81,10 +81,12 @@ class remote_shell(cmd.Cmd):
         self.domain = "all"
         self.prompt = '\033[36;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
         self.mapDomainHost = defaultdict(list)
+        self.histfile = os.path.expanduser('~/.remote_shell_history')
+        self.histfile_size = 1000
         cfg.read(self.config_file)
         
         domaintmp=[]
-        hostlist=[]
+        self.mapLogin={}
         for i in cfg.sections():
             #print cfg.options(i)
             for j in cfg.options(i):
@@ -92,6 +94,10 @@ class remote_shell(cmd.Cmd):
                 if j == "domain":
                     domaintmp.append(cfg.get(i,j))
                     self.mapDomainHost[cfg.get(i,j)].append(i)
+            self.mapLogin[cfg.get(i,'user')+"@"+cfg.get(i,'host')] = i
+            self.mapLogin[cfg.get(i,'host')+"@"+cfg.get(i,'user')] = i
+            self.mapLogin[cfg.get(i,'host')] = i
+            
         #print self.mapDomainHost
         self.domain_list = Counter(domaintmp)
         #print(self.domain_list)
@@ -277,6 +283,11 @@ class remote_shell(cmd.Cmd):
                 for i in self.mapDomainHost[d]:
                     if i.startswith(path):
                         completions.append(i)
+
+                for k,v in self.mapLogin.items():
+                    if k.startswith(path):
+                        completions.append(k)
+                
         if path[0]=='~':
             path = os.path.expanduser('~')+path[1:]
         if os.path.isdir(path):
@@ -330,6 +341,9 @@ class remote_shell(cmd.Cmd):
             return cmd.Cmd.onecmd(self, line)
         if line in cfg.sections():
             self.remote_interactive(line)
+            return
+        if line in self.mapLogin.keys():
+            self.remote_interactive(self.mapLogin[line])
             return
         if line != "" and line[0] == '!':
             if len(line)>2 and line[1:3] == "vi":

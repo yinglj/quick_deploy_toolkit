@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 # ---------------------------------------------------------------------------------------
@@ -20,12 +20,16 @@ import ConfigParser
 import threading
 import base64
 import argparse
+from collections import Counter
+from collections import defaultdict
+from collections import OrderedDict
 
 mutex = threading.Lock()
 cfg = ConfigParser.ConfigParser()
 #global spec_host
 spec_cmd = ""
 cmds = []
+mapStdout = defaultdict(list)
 background = ""
 def read_cfg(filename):
     cfg.read(filename)
@@ -103,6 +107,11 @@ def init_command(domain_config, spec_host, command):
             thread_list.append(my_thread)
     for thread in thread_list:
         thread.join()
+    for key, value in sorted(mapStdout.items(),key=lambda dict:dict[0],reverse=False):  #按key列进行排序
+        for i in value:
+            print(i,end='')
+    mapStdout.clear()
+
 
 def onethread_run_ssh(user,password,host,port,workdir,command):
     #spec_cmd = "ssh -t -p {} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no {} {}@{} ".format(port, background, user, host)
@@ -120,7 +129,7 @@ def run_ssh(host, cmd, passwd):
         child.expect('(!*)password:(!*)')
         _ = child.sendline(base64.b64decode(passwd)[:-1])    #base64解码后多一个回车键符，需要剪掉一位
     except pexpect.EOF:
-        print("pexpect.EOF")
+        #print("pexpect.EOF")
         child.close(force=True)
         return
     except pexpect.TIMEOUT:
@@ -130,11 +139,15 @@ def run_ssh(host, cmd, passwd):
 
     child.expect(pexpect.EOF,timeout=60)
     if mutex.acquire():
-        print "-----------------------------------------------------------------------------------------"
-        print "# host:\033[36;1m{}\033[0m".format(host)
-        print "-----------------------------------------------------------------------------------------",
-        print child.before,
-	mutex.release()
+        #print("-----------------------------------------------------------------------------------------")
+        #print("# host:\033[36;1m{}\033[0m".format(host))
+        #print "-----------------------------------------------------------------------------------------",
+        #print child.before.decode(),
+        mapStdout[host].append("-"*124 + "\n")
+        mapStdout[host].append("# host:\033[36;1m{0: ^116}\033[0m#\n".format(host))
+        mapStdout[host].append("-"*124)
+        mapStdout[host].append(child.before.decode())
+    mutex.release()
     child.close(force=True)
 
 hostcfg = '''please config filename: host.cfg
@@ -150,10 +163,10 @@ workdir = /home/mongodb
 '''
 
 def Usage(command):
-    print "usage:"+command+" [host1] command"
-    print hostcfg
-    print "example: "+command+" 'ls -l'"
-    print "example: "+command+" host1 'ls -l'"
+    print("usage:"+command+" [host1] command")
+    print(hostcfg)
+    print("example: "+command+" 'ls -l'")
+    print("example: "+command+" host1 'ls -l'")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -161,7 +174,7 @@ if __name__ == '__main__':
     parser.add_argument('--ip', default='', help='--ip host_ip')
     args, unknowns = parser.parse_known_args()
     command = ' '.join(unknowns).replace("\"", "\\\"").replace("$", "\\$")#.replace("\'", "\\'")
-    #print command
+    #sprint(command)
     #print args
     #print "unknowns:{}".format(unknowns)
 
@@ -179,10 +192,10 @@ if __name__ == '__main__':
             run_command(args.domain, args.ip, command)
             time.sleep(0)
         except KeyboardInterrupt as e:
-            print e
+            print(e)
         except IOError as e:
-            print e
+            print(e)
         except ValueError as e:
-            print e
+            print(e)
         finally:
             pass

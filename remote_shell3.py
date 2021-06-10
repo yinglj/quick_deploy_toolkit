@@ -80,10 +80,12 @@ class remote_shell(cmd.Cmd):
         self.domain = "all"
         self.prompt = '\033[36;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
         self.mapDomainHost = defaultdict(list)
+        self.histfile = os.path.expanduser('~/.remote_shell_history')
+        self.histfile_size = 1000
         cfg.read(self.config_file)
         
         domaintmp=[]
-        hostlist=[]
+        self.mapLogin={}
         for i in cfg.sections():
             #print cfg.options(i)
             for j in cfg.options(i):
@@ -91,6 +93,11 @@ class remote_shell(cmd.Cmd):
                 if j == "domain":
                     domaintmp.append(cfg.get(i,j))
                     self.mapDomainHost[cfg.get(i,j)].append(i)
+            #! 支持按IP进行登录跳转        
+            self.mapLogin[cfg.get(i,'user')+"@"+cfg.get(i,'host')] = i
+            self.mapLogin[cfg.get(i,'host')+"@"+cfg.get(i,'user')] = i
+            self.mapLogin[cfg.get(i,'host')] = i
+            
         #print self.mapDomainHost
         self.domain_list = Counter(domaintmp)
         #print(self.domain_list)
@@ -114,6 +121,14 @@ class remote_shell(cmd.Cmd):
         '''Exit remote_shell.py with EOF.'''
         print
         return 1
+    
+    def preloop(self):
+        if os.path.exists(self.histfile):
+            readline.read_history_file(self.histfile)
+
+    def postloop(self):
+        readline.set_history_length(self.histfile_size)
+        readline.write_history_file(self.histfile)
 
     # 采用按块显示的方式，每个块固定BLOCK_NUM决定块里有多个主机，默认为10条
     def refresh_menu(self):
@@ -189,7 +204,8 @@ class remote_shell(cmd.Cmd):
         print(help_line)
     
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
-        self.prompt = '\033[36;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
+        #self.prompt = '\033[36;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
+        self.prompt = '\033[33;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
     
     def emptyline(self):
         self.refresh_menu()
@@ -278,6 +294,11 @@ class remote_shell(cmd.Cmd):
                 for i in self.mapDomainHost[d]:
                     if i.startswith(path):
                         completions.append(i)
+
+                for k,v in self.mapLogin.items():
+                    if k.startswith(path):
+                        completions.append(k)
+                
         if path[0]=='~':
             path = os.path.expanduser('~')+path[1:]
         if os.path.isdir(path):
@@ -331,6 +352,9 @@ class remote_shell(cmd.Cmd):
             return cmd.Cmd.onecmd(self, line)
         if line in cfg.sections():
             self.remote_interactive(line)
+            return
+        if line in self.mapLogin.keys():
+            self.remote_interactive(self.mapLogin[line])
             return
         if line != "" and line[0] == '!':
             if len(line)>2 and line[1:3] == "vi":
@@ -429,9 +453,12 @@ class remote_shell(cmd.Cmd):
 
 if __name__ == '__main__':
         #! for add current dir to LD_LIBRARY_PATH environment
-        if os.path.dirname(os.path.realpath(__file__)) not in os.environ.get('LD_LIBRARY_PATH'):
-            os.environ['LD_LIBRARY_PATH']=os.environ.get('LD_LIBRARY_PATH')+":"+os.path.dirname(os.path.realpath(__file__))
-            os.execve(os.path.realpath(__file__), sys.argv, os.environ) #* rerun
+        import platform
+        #* 这里有一个问题用#!/usr/bin/env python3时，macos操作系统下环境变量变更os.execve会不生效
+        if platform.system() == 'Linux':    
+            if os.path.dirname(os.path.realpath(__file__)) not in os.environ.get('LD_LIBRARY_PATH'):
+                os.environ['LD_LIBRARY_PATH']=os.environ.get('LD_LIBRARY_PATH')+":"+os.path.dirname(os.path.realpath(__file__))
+                os.execve(os.path.realpath(__file__), sys.argv, os.environ) #* rerun
 
         import readline
         readline.set_completer_delims(' \t\n')
