@@ -2,3 +2,6 @@
 .vscode
 .ipynb_checkpoints
 .gdb_history
+coreinfo.txt
+d
+host.cfg
