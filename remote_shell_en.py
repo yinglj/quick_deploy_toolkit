@@ -121,6 +121,14 @@ class remote_shell(cmd.Cmd):
         '''Exit remote_shell.py with EOF.'''
         print
         return 1
+    
+    def preloop(self):
+        if os.path.exists(self.histfile):
+            readline.read_history_file(self.histfile)
+
+    def postloop(self):
+        readline.set_history_length(self.histfile_size)
+        readline.write_history_file(self.histfile)
 
     # Display by block, each block fixed BLOCK_NUM determines that there are multiple hosts in the block, default is 10
     def refresh_menu(self):
