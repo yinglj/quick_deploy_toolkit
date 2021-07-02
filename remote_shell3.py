@@ -143,7 +143,7 @@ class remote_shell(cmd.Cmd):
         hostlist = []
         # for d,h in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=False):   #domain, 按主机数量增序排列
         # domain, 按主机数量增序排列
-        for d, h in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
+        for d, h in sorted(self.domain_list.items(), key=lambda dict: dict[0], reverse=False):
             if(self.domain != "all" and d != self.domain):
                 continue
             iNum = 0
@@ -155,9 +155,9 @@ class remote_shell(cmd.Cmd):
                         "*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH-str_count(d)))
                     hostlist.append(
                         "*"+"{0: ^{1}}".format(" -"*(int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
-                    hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format(
+                    hostlist.append("*"+" {0: <{1}}{2: <{3}}{4: <{5}}".format(
                         "HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH-str_count("用户"), "IP列表", IP_WIDTH-str_count("IP列表")))
-                str1 = "*"+" \033[36;1m{0: <{1}}\033[0m{2: ^{3}}{4: ^{5}}".format(
+                str1 = "*"+" \033[36;1m{0: <{1}}\033[0m{2:<{3}}{4: <{5}}".format(
                     i, HOST_WIDTH-1, cfg.get(i, "user"), USER_WIDTH, cfg.get(i, "host"), IP_WIDTH)
                 hostlist.append(str1)  # host
                 iNum = iNum + 1
