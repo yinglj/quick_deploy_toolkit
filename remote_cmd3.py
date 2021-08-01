@@ -117,7 +117,7 @@ def init_command(domain_config, spec_host, command):
 def onethread_run_ssh(user,password,host,port,workdir,command):
     #spec_cmd = "ssh -t -p {} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no {} {}@{} ".format(port, background, user, host)
     spec_cmd = "ssh -p {} -tt -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no {} {}@{} ".format(port, background, user, host)
-    spec_cmd += command
+    spec_cmd += "LC_ALL=en_US.utf-8 "+command
     #print "spec_cmd:"+spec_cmd
     run_ssh(host, spec_cmd, password)
 
@@ -138,7 +138,7 @@ def run_ssh(host, cmd, passwd):
         child.close(force=True)
         return
 
-    child.expect(pexpect.EOF,timeout=60)
+    child.expect(pexpect.EOF,timeout=300)
     if mutex.acquire():
         #print("-----------------------------------------------------------------------------------------")
         #print("# host:\033[36;1m{}\033[0m".format(host))
