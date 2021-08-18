@@ -268,23 +268,44 @@ class remote_shell(cmd.Cmd):
         '''rm host.'''
         return self.rm_host()
 
-    def complete_set(self, text, line, begidx, endidx):
+    # excute command for special domain
+    def do_domain(self, line):
+        '''excute command for special domain.\neg. domain mdb\n    domain all\n    domain'''
+        parse_temp = line.split()
+        if len(parse_temp) == 0:
+            self.domain = "all"
+            self.host = ""
+            self.refresh_menu()
+            return False
+        else:
+            if parse_temp[0].lower()=='all':
+                self.domain = "all"
+                self.host = ""
+                self.refresh_menu()
+                return False
+            for d, h in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
+                if(parse_temp[0].lower() == d.lower()):
+                    self.domain = d
+                    self.host = ""
+                    self.refresh_menu()
+                    return False
+            print('domain \033[31;1m{}\033[0m is not exists.'.format(parse_temp[0]))
+            
+        return False
+
+    def complete_domain(self, text, line, begidx, endidx):
         completions_set = [
-            'host',
-            'domain'
+            'all'
         ]
 
         mline = line.partition(' ')[-1]
-        if mline != "":
-            # domain, 按主机数量增序排列
-            for d, h in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
-                if(self.domain != "all" and d != self.domain):
-                    completions_set.append("domain "+d)
-                    continue
-                iNum = 0
-                completions_set.append("domain "+d)
-                for i in self.mapDomainHost[d]:
-                    completions_set.append("host "+i)
+        # domain, 按主机数量增序排列
+        for d, h in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
+            if(self.domain != "all" and d != self.domain):
+                completions_set.append(d)
+                continue
+            iNum = 0
+            completions_set.append(d)
 
         offs = len(mline) - len(text)
         return [s[offs:] for s in completions_set if s.startswith(mline)]
@@ -300,6 +321,28 @@ class remote_shell(cmd.Cmd):
         #    dotext = 'do_'+ path
         #    return [a[3:] for a in self.get_names() if a.startswith(dotext)]
         completions = []
+        commands = [
+            'prompt',
+            'EOF',
+            'exit',
+            'bye',
+            'vl',
+            'set',
+            'enset',
+            'rmhost',
+            'domain',
+            'show',
+            'quit',
+            'by',
+            'q',
+            'shell',
+            'run',
+            'help'
+        ]
+        if line == '':
+            completions = commands
+            return completions
+        
         if path.partition(' ')[-1] == "" and len(line.split(" ")) == 1:
             # domain, 按主机数量增序排列
             for d, h in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
@@ -314,6 +357,10 @@ class remote_shell(cmd.Cmd):
                 for k, v in self.mapLogin.items():
                     if k.startswith(path):
                         completions.append(k)
+            
+            for i in commands:
+                if i.startswith(path):
+                    completions.append(i)
 
         if path[0] == '~':
             path = os.path.expanduser('~')+path[1:]
@@ -326,6 +373,7 @@ class remote_shell(cmd.Cmd):
             for i in bin_path:
                 completions = completions + \
                     [(s.split('/'))[-1] for s in glob.glob(i+"/"+path+"*")]
+        #print(completions)
         return completions
 
     def _complete_path(self, path, line, start_idx, end_idx):
@@ -367,7 +415,8 @@ class remote_shell(cmd.Cmd):
         if line == "" or line == "bye" or line == "exit" or line == "by" or line == "quit" \
                 or line.startswith("help") or line == "EOF" or line.startswith("shell") \
                 or line.startswith("run") or line.startswith("show") or line == "q" \
-                or line == "set" or line == "enset" or line == "vl" or line == "rmhost":
+                or line == "set" or line == "enset" or line == "vl" or line == "rmhost" \
+                or line.startswith("domain"):
             return cmd.Cmd.onecmd(self, line)
         if line in self.cfg.sections():
             self.remote_interactive(line)
