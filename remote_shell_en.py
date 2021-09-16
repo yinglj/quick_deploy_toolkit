@@ -11,7 +11,8 @@
 # password = Password of remote Linux/UNIX server, for root user.
 # host = IP Addreess of remote Linux/UNIX server, no hostname
 # ---------------------------------------------------------------------------------------
-
+from __future__ import print_function
+import glob
 import sys
 import cmd
 import subprocess
@@ -42,6 +43,9 @@ IP_WIDTH = 16
 COLUMN_WIDTH = HOST_WIDTH + USER_WIDTH + IP_WIDTH
 BLOCK_NUM = 10
 #Interface display configuration
+#define const variable
+ENCRYPT_PASSWORD_MODE = 0
+DECRYPT_PASSWORD_MODE = 1
 
 import glob
 
@@ -83,28 +87,7 @@ class remote_shell(cmd.Cmd):
         self.mapDomainHost = defaultdict(list)
         self.histfile = os.path.expanduser('~/.remote_shell_history')
         self.histfile_size = 1000
-        cfg.read(self.config_file)
-        
-        domaintmp=[]
-        self.mapLogin={}
-        for i in cfg.sections():
-            #print cfg.options(i)
-            for j in cfg.options(i):
-                #print cfg.get(i,j)
-                if j == "domain":
-                    domaintmp.append(cfg.get(i,j))
-                    self.mapDomainHost[cfg.get(i,j)].append(i)
-            self.mapLogin[cfg.get(i,'user')+"@"+cfg.get(i,'host')] = i
-            self.mapLogin[cfg.get(i,'host')+"@"+cfg.get(i,'user')] = i
-            self.mapLogin[cfg.get(i,'host')] = i
-            
-        #print self.mapDomainHost
-        self.domain_list = Counter(domaintmp)
-        #print(self.domain_list)
-        #for a,b in self.domain_list.items():
-        #    print a, "to", b
-        #for c,d in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=True):
-        #    print c, "to=>", d
+
         self.refresh_menu()
 
     def quit(self):
@@ -132,6 +115,34 @@ class remote_shell(cmd.Cmd):
 
     # Display by block, each block fixed BLOCK_NUM determines that there are multiple hosts in the block, default is 10
     def refresh_menu(self):
+        self.cfg = ConfigParser.ConfigParser()
+        self.cfg.read(self.config_file)
+
+        self.mapDomainHost.clear()
+        domaintmp = []
+        self.mapLogin = {}
+        for i in self.cfg.sections():
+            # print self.cfg.options(i)
+            for j in self.cfg.options(i):
+                # print self.cfg.get(i,j)
+                if j == "domain":
+                    domaintmp.append(self.cfg.get(i, j))
+                    self.mapDomainHost[self.cfg.get(i, j)].append(i)
+            #! support useing ip to login
+            self.mapLogin[self.cfg.get(
+                i, 'user')+"@"+self.cfg.get(i, 'host')] = i
+            self.mapLogin[self.cfg.get(
+                i, 'host')+"@"+self.cfg.get(i, 'user')] = i
+            self.mapLogin[self.cfg.get(i, 'host')] = i
+
+        # print self.mapDomainHost
+        self.domain_list = Counter(domaintmp)
+        # print(self.domain_list)
+        # for a,b in self.domain_list.items():
+        #    print a, "to", b
+        # for c,d in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=True):
+        #    print c, "to=>", d
+
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
         print("*"+"{0: ^{1}}".format("Welcome to using scripts for remoting login",(COLUMN_WIDTH+1)*COLUMN_NUM-1)+"*")  #{}inline{}
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
@@ -148,7 +159,7 @@ class remote_shell(cmd.Cmd):
                     hostlist.append("*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH+str_count(d)))     #{: ^38}, 38 width fill space alignment
                     hostlist.append("*"+"{0: ^{1}}".format(" -"*(int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
                     hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1, "login", USER_WIDTH+str_count("login"), "IP LIST", IP_WIDTH+str_count("IP LIST")))
-                str1 = "*"+" \033[36;1m{0: <{1}}\033[0m{2: ^{3}}{4: ^{5}}".format(i, HOST_WIDTH-1, cfg.get(i,"user"), USER_WIDTH, cfg.get(i,"host"), IP_WIDTH)
+                str1 = "*"+" \033[36;1m{0: <{1}}\033[0m{2: ^{3}}{4: ^{5}}".format(i, HOST_WIDTH-1, self.cfg.get(i,"user"), USER_WIDTH, self.cfg.get(i,"host"), IP_WIDTH)
                 hostlist.append(str1) #host
                 iNum = iNum + 1
                 if(iNum % BLOCK_NUM == 0):
@@ -219,55 +230,66 @@ class remote_shell(cmd.Cmd):
         self.quit()
         return True
 
+    def do_vl(self, line):
+        '''Edit config file.'''
+        os.system("vi " + self.config_file)
+        self.quit()
+        return True
+
+    # add_cfg
     def do_set(self, line):
-        '''set the special domain or set the host or set the ip.\neg. set domain mdb\n    set host host158\n    set ip 10.10.13.158'''
+        '''add config.'''
+        return self.config_host(ENCRYPT_PASSWORD_MODE)
+
+    # add_cfg
+    def do_enset(self, line):
+        '''add encrypted config.'''
+        return self.config_host(DECRYPT_PASSWORD_MODE)
+
+    # add_cfg
+    def do_rmhost(self, line):
+        '''rm host.'''
+        return self.rm_host()
+
+    # excute command for special domain
+    def do_domain(self, line):
+        '''excute command for special domain.\neg. domain mdb\n    domain all\n    domain'''
         parse_temp = line.split()
-        if len(parse_temp) < 1:
-            print("domain={0}, host={1}".format(self.domain, self.host))
-            print("Please input set domain|host|ip")
+        if len(parse_temp) == 0:
+            self.domain = "all"
+            self.host = ""
+            self.refresh_menu()
+            return False
         else:
-            if parse_temp[0]=='host' or parse_temp[0]=='ip':
-                if len(parse_temp) == 1:
-                    self.host = ""
-                else:
-                    self.host = parse_temp[1]
+            if parse_temp[0].lower()=='all':
+                self.domain = "all"
+                self.host = ""
                 self.refresh_menu()
-            elif parse_temp[0]=='domain':
-                if len(parse_temp) == 1:
-                    self.domain = "all"
+                return False
+            for d, h in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
+                if(parse_temp[0].lower() == d.lower()):
+                    self.domain = d
                     self.host = ""
-                    #return False
-                else:
-                    if(parse_temp[1] == 'all' or parse_temp[1] == 'ALL'):
-                        self.domain = "all"
-                        self.host = ""
-                    else:
-                        self.domain = parse_temp[1]
-                        self.host = ""
-                    #if not os.path.exists(parse_temp[1]):
-                    #    print("file {0} is not exist.".format(parse_temp[1]))
-                self.refresh_menu()
-            else:
-                print("set host host123\nset host 10.10.13.158\nset domain mdb")
+                    self.refresh_menu()
+                    return False
+            print('domain \033[31;1m{}\033[0m is not exists.'.format(parse_temp[0]))
+            
         return False
 
-    def complete_set(self, text, line, begidx, endidx):
+    def complete_domain(self, text, line, begidx, endidx):
         completions_set = [
-            'host',
-            'domain'
+            'all'
         ]
         
         mline = line.partition(' ')[-1]
-        if mline != "":
-            for d,h in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=False):   #domain, 按主机数量增序排列
-                if(self.domain != "all" and d != self.domain):
-                    completions_set.append("domain "+d)
-                    continue
-                iNum=0
-                completions_set.append("domain "+d)
-                for i in self.mapDomainHost[d]:
-                    completions_set.append("host "+i)
-                    
+        # domain, sorted by host's count
+        for d, h in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
+            if(self.domain != "all" and d != self.domain):
+                completions_set.append(d)
+                continue
+            iNum = 0
+            completions_set.append(d)
+
         offs = len(mline) - len(text)
         return [s[offs:] for s in completions_set if s.startswith(mline)]
     
@@ -282,8 +304,30 @@ class remote_shell(cmd.Cmd):
         #    dotext = 'do_'+ path
         #    return [a[3:] for a in self.get_names() if a.startswith(dotext)]
         completions = []
+        commands = [
+            'prompt',
+            'EOF',
+            'exit',
+            'bye',
+            'vl',
+            'set',
+            'enset',
+            'rmhost',
+            'domain',
+            'show',
+            'quit',
+            'by',
+            'q',
+            'shell',
+            'run',
+            'help'
+        ]
+        if line == '':
+            completions = commands
+            return completions
+        
         if path.partition(' ')[-1] == "" and len(line.split(" ")) == 1:
-            for d,h in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=False):   #domain, 按主机数量增序排列
+            for d,h in sorted(self.domain_list.items(),key=lambda dict:dict[1],reverse=False):   #domain, 按主机数量增序排列
                 if(self.domain != "all" and d != self.domain):
                     continue
                 iNum=0
@@ -295,8 +339,12 @@ class remote_shell(cmd.Cmd):
                 for k,v in self.mapLogin.items():
                     if k.startswith(path):
                         completions.append(k)
-                
-        if path[0]=='~':
+            
+            for i in commands:
+                if i.startswith(path):
+                    completions.append(i)
+
+        if path[0] == '~':
             path = os.path.expanduser('~')+path[1:]
         if os.path.isdir(path):
             return glob.glob(os.path.join(path, '*'))
@@ -344,10 +392,12 @@ class remote_shell(cmd.Cmd):
     def onecmd(self, line):
         '''Execute the rest of the line as a shell command, eg. \'!ls\', \'shell pwd\'.'''
         if line == "" or line == "bye" or line == "exit" or line == "by" or line == "quit" \
-            or line.startswith("help") or line == "EOF" or line.startswith("shell") or line.startswith("run") \
-            or line.startswith("set") or line.startswith("show") or line == "q":
+                or line.startswith("help") or line == "EOF" or line.startswith("shell") \
+                or line.startswith("run") or line.startswith("show") or line == "q" \
+                or line == "set" or line == "enset" or line == "vl" or line == "rmhost" \
+                or line.startswith("domain"):
             return cmd.Cmd.onecmd(self, line)
-        if line in cfg.sections():
+        if line in self.cfg.sections():
             self.remote_interactive(line)
             return
         if line in self.mapLogin.keys():
@@ -357,8 +407,9 @@ class remote_shell(cmd.Cmd):
             if len(line)>2 and line[1:3] == "vi":
                 print("can't support !vi or !vim")
                 return False
-            command = subprocess.Popen(line[1:], shell=True, stdout=subprocess.PIPE)
-            print command.communicate()[0],
+            command = subprocess.Popen(
+                line[1:], shell=True, stdout=subprocess.PIPE)
+            print(command.communicate()[0], end=' ')
             return False
 
         if len(line)>1 and line[0:2] == "vi":
@@ -370,8 +421,8 @@ class remote_shell(cmd.Cmd):
     def do_shell(self, line):
         '''Execute the rest of the line as a shell command, eg. \'!ls\', \'shell pwd\'.
         ! for localhost, shell or none for remote host.'''
-        #判断输入是非为HOST.NO
-        if line in cfg.sections():
+        # check HOST.NO
+        if line in self.cfg.sections():
             self.remote_interactive(line)
             return
         self.remote_cmd(self.host, line)
@@ -403,10 +454,10 @@ class remote_shell(cmd.Cmd):
         return struct.unpack('HHHH', x)[0:2]
 
     def remote_interactive(self, host):
-        user = cfg.get(host, "user")
-        password = cfg.get(host, "password")
-        ip = cfg.get(host, "host")
-        port = cfg.get(host, "port")
+        user = self.cfg.get(host, "user")
+        password = self.cfg.get(host, "password")
+        ip = self.cfg.get(host, "host")
+        port = self.cfg.get(host, "port")
         cmd = "ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {0} {1}@{2}".format(port, user, ip)
         print(cmd)
         child = pexpect.spawn(cmd)
@@ -415,7 +466,8 @@ class remote_shell(cmd.Cmd):
         child.setwinsize(winsize[0], winsize[1])
         try:
             child.expect('(!*)password:(!*)')
-            _ = child.sendline(base64.b64decode(password)[:-1]) #base64解码后多一个回车键符，需要剪掉一位
+            # base64解码后多一个回车键符，需要剪掉一位
+            _ = child.sendline(base64.b64decode(password))
         except pexpect.EOF:
             print("pexpect.EOF")
             child.close(force=True)
@@ -445,33 +497,99 @@ class remote_shell(cmd.Cmd):
             out = command.stdout.readline()
             if out.decode() == '':
                 break
-            print out.decode(),
-        #print command.communicate()[0],
+            print(out.decode(), end='')
+        # print command.communicate()[0],
+
+    def config_host(self, opt):
+        '''Config the host file'''
+        print("Config the host file:" + self.config_file)
+        host_no = input("Input your host_no: ")
+        # section already exists return
+        if True == self.cfg.has_section(host_no):
+            print("host_no:" + host_no + " already exists!")
+            return
+
+        # get userinput
+        domain = input("Input your domain: ")
+        host = input("Input your host: ")
+        port = input("Input your port: ")
+        user = input("Input your user: ")
+        password = input("Input your password: ")
+
+        # encrypt password
+        if ENCRYPT_PASSWORD_MODE == opt:
+            # enpassword = subprocess.getoutput("echo " + password + "|base64")
+            enpassword = base64.b64encode(
+                password.encode('utf-8')).decode('utf-8')
+        else:
+            enpassword = password
+        workdir = input("Input your workdir: ")
+
+        print("[" + host_no + "]"
+              "\r\ndomain = " + domain +
+              "\r\nhost = " + host +
+              "\r\nport = " + port +
+              "\r\nuser = " + user +
+              "\r\npassword = " + enpassword +
+              "\r\nworkdir = " + workdir)
+        if "y" == input("confirm the config to be saved.(y/n):"):
+            # add section / set option & key
+            self.cfg.add_section(host_no)
+            self.cfg.set(host_no, "domain", domain)
+            self.cfg.set(host_no, "host", host)
+            self.cfg.set(host_no, "port", port)
+            self.cfg.set(host_no, "user", user)
+            self.cfg.set(host_no, "password", enpassword)
+            self.cfg.set(host_no, "workdir", workdir)
+
+            # write to file
+            with open(self.config_file, "w+") as f:
+                self.cfg.write(f)
+            self.emptyline()
+
+    def rm_host(self):
+        '''rm the host_no cofig'''
+        host_no = input("Input the host_no you want to rm: ")
+        # section not exists return
+        if False == self.cfg.has_section(host_no):
+            print("host_no:" + host_no + " not exists!")
+            return
+        self.cfg.remove_section(host_no)
+        # write to file
+        with open(self.config_file, "w+") as f:
+            self.cfg.write(f)
+        self.emptyline()
+
 
 if __name__ == '__main__':
         #! for add current dir to LD_LIBRARY_PATH environment
+    import platform
+    # * 这里有一个问题用#!/usr/bin/env python3时，macos操作系统下环境变量变更os.execve会不生效
+    if platform.system() == 'Linux':
         if os.path.dirname(os.path.realpath(__file__)) not in os.environ.get('LD_LIBRARY_PATH'):
-            os.environ['LD_LIBRARY_PATH']=os.environ.get('LD_LIBRARY_PATH')+":"+os.path.dirname(os.path.realpath(__file__))
-            os.execve(os.path.realpath(__file__), sys.argv, os.environ) #* rerun
+            os.environ['LD_LIBRARY_PATH'] = os.environ.get(
+                'LD_LIBRARY_PATH')+":"+os.path.dirname(os.path.realpath(__file__))
+            os.execve(os.path.realpath(__file__),
+                      sys.argv, os.environ)  # * rerun
 
-        import readline
-        readline.set_completer_delims(' \t\n')
+    import readline
+    readline.set_completer_delims(' \t\n')
 
-        if len(sys.argv) > 2:
-            print("usage:",sys.argv[0])
-            print("usage:",sys.argv[0],"host")
+    if len(sys.argv) > 2:
+        print("usage:", sys.argv[0])
+        print("usage:", sys.argv[0], "host")
+    else:
+        if len(sys.argv) == 2:
+            client = remote_shell(sys.argv[1])
         else:
-            if len(sys.argv) == 2:
-                client = remote_shell(sys.argv[1])
-            else:
-                client = remote_shell("")
-            try:
-                client.cmdloop()
-            except KeyboardInterrupt as e:
-                print(e)
-            except IOError as e:
-                print(e)
-            except ValueError as e:
-                print(e)
-            finally:
-                client.quit()
+            client = remote_shell("")
+        try:
+            client.cmdloop()
+        except KeyboardInterrupt as e:
+            print(e)
+        except IOError as e:
+            print(e)
+        except ValueError as e:
+            print(e)
+        finally:
+            client.quit()
