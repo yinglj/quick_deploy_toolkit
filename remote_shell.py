@@ -444,10 +444,14 @@ class remote_shell(cmd.Cmd):
 
 if __name__ == '__main__':
         #* for add current dir to LD_LIBRARY_PATH environment
-        if os.path.dirname(os.path.realpath(__file__)) not in os.environ.get('LD_LIBRARY_PATH'):
-            os.environ['LD_LIBRARY_PATH']=os.environ.get('LD_LIBRARY_PATH')+":"+os.path.dirname(os.path.realpath(__file__))
-            os.execve(os.path.realpath(__file__), sys.argv, os.environ) #* rerun
-        
+        import platform
+        # * 这里有一个问题用#!/usr/bin/env python3时，macos操作系统下环境变量变更os.execve会不生效
+        if platform.system() == 'Linux':
+            if os.path.dirname(os.path.realpath(__file__)) not in os.environ.get('LD_LIBRARY_PATH'):
+                os.environ['LD_LIBRARY_PATH'] = os.environ.get(
+                    'LD_LIBRARY_PATH')+":"+os.path.dirname(os.path.realpath(__file__))
+                os.execve(os.path.realpath(__file__),
+                        sys.argv, os.environ)  # * rerun
         import readline
         readline.set_completer_delims(' \t\n')
 
