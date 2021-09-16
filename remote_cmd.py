@@ -11,7 +11,7 @@
 # password = Password of remote Linux/UNIX server, for root user.
 # host = IP Addreess of remote Linux/UNIX server, no hostname
 # ---------------------------------------------------------------------------------------
-
+from __future__ import print_function
 import os,sys
 import pexpect
 import time
@@ -127,7 +127,10 @@ def run_ssh(host, cmd, passwd):
     child = pexpect.spawn(cmd)
     try:
         child.expect('(!*)password:(!*)')
-        _ = child.sendline(base64.b64decode(passwd)[:-1])    #base64解码后多一个回车键符，需要剪掉一位
+        passwd_decode = base64.b64decode(passwd)
+        if passwd_decode[-1]=='\n':
+            passwd_decode = passwd_decode[:-1]
+        _ = child.sendline(passwd_decode)   #base64解码后多一个回车键符，需要剪掉一位
     except pexpect.EOF:
         #print("pexpect.EOF")
         child.close(force=True)
