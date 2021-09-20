@@ -198,7 +198,7 @@ class remote_shell(cmd.Cmd):
         for l in help:
             help_line = help_line + "{0: <{1}}".format(l, COLUMN_WIDTH-20);
             help_line = help_line + "|"
-        help_line = help_line + " Current domain：\033[31;1m{0: <10} {1: >12}\033[0m".format(self.domain, self.host) + "*"
+        help_line = help_line + " Current domain: \033[31;1m{0: <10} {1: >12}\033[0m".format(self.domain, self.host) + "*"
         print(help_line)
     
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
