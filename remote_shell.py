@@ -125,7 +125,7 @@ class remote_shell(cmd.Cmd):
     # 采用按块显示的方式，每个块固定BLOCK_NUM决定块里有多个主机，默认为10条
     def refresh_menu(self):
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
-        print("*"+"{0: ^{1}}".format("Welcome to using scripts for remoting login",(COLUMN_WIDTH+1)*COLUMN_NUM-1)+"*")  #{}内嵌{}
+        print("*"+"{0: ^{1}}".format("welcome to use scripts for remoting login",(COLUMN_WIDTH+1)*COLUMN_NUM-1)+"*")  #{}内嵌{}
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
 
         hostlist = []

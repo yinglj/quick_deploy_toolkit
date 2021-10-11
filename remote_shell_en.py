@@ -133,7 +133,7 @@ class remote_shell(cmd.Cmd):
         #    print c, "to=>", d
 
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
-        print("*"+"{0: ^{1}}".format("Welcome to using scripts for remoting login",(COLUMN_WIDTH+1)*COLUMN_NUM-1)+"*")  #{}inline{}
+        print("*"+"{0: ^{1}}".format("welcome to use scripts for remoting login",(COLUMN_WIDTH+1)*COLUMN_NUM-1)+"*")  #{}inline{}
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
 
         hostlist = []

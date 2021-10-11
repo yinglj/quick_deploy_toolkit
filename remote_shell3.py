@@ -142,7 +142,7 @@ class remote_shell(cmd.Cmd):
         #    print c, "to=>", d
 
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
-        print("*"+"{0: ^{1}}".format("Welcome to using scripts for remoting login",
+        print("*"+"{0: ^{1}}".format("welcome to use scripts for remoting login",
               (COLUMN_WIDTH+1)*COLUMN_NUM-1)+"*")  # {}内嵌{}
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
 
@@ -479,7 +479,7 @@ class remote_shell(cmd.Cmd):
         password = self.cfg.get(host, "password")
         ip = self.cfg.get(host, "host")
         port = self.cfg.get(host, "port")
-        cmd = "ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {0} {1}@{2}".format(
+        cmd = "ssh -o ServerAliveInterval=60 -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {0} {1}@{2}".format(
             port, user, ip)
         print(cmd)
         child = pexpect.spawn(cmd)
