@@ -386,6 +386,7 @@ class remote_shell(cmd.Cmd):
                 or line == "set" or line == "enset" or line == "vl" or line == "rmhost" \
                 or line.startswith("domain"):
             return cmd.Cmd.onecmd(self, line)
+        line = line.strip()
         if line in self.cfg.sections():
             self.remote_interactive(line)
             return
