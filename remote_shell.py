@@ -341,6 +341,7 @@ class remote_shell(cmd.Cmd):
             or line.startswith("help") or line == "EOF" or line.startswith("shell") or line.startswith("run") \
             or line.startswith("set") or line.startswith("show") or line == "q":
             return cmd.Cmd.onecmd(self, line)
+        line = line.strip()
         if line in cfg.sections():
             self.remote_interactive(line)
             return
