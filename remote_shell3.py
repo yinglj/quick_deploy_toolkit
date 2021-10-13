@@ -19,7 +19,6 @@ import subprocess
 import string
 import os
 import pexpect
-import configparser
 from collections import Counter
 from collections import defaultdict
 import base64
@@ -28,6 +27,8 @@ import termios
 import struct
 import fcntl
 import socket
+from configparser import RawConfigParser, NoOptionError
+
 # todo add set variable to save domain, check host.cfg is existed while set domain.
 # todo add set variable to save host
 # todo show domain host
@@ -66,6 +67,13 @@ def str_count(str):
             count_pu += 1
     return count_zh
 
+
+class MyConfigParser(RawConfigParser):
+    def get(self, section, option):
+        try:
+            return RawConfigParser.get(self, section, option)
+        except NoOptionError:
+            return None
 
 class remote_shell(cmd.Cmd):
 
@@ -113,7 +121,7 @@ class remote_shell(cmd.Cmd):
 
     # 采用按块显示的方式，每个块固定BLOCK_NUM决定块里有多个主机，默认为10条
     def refresh_menu(self):
-        self.cfg = configparser.ConfigParser()
+        self.cfg = MyConfigParser(allow_no_value=True)
         self.cfg.read(self.config_file)
 
         self.mapDomainHost.clear()
@@ -480,8 +488,11 @@ class remote_shell(cmd.Cmd):
         password = self.cfg.get(host, "password")
         ip = self.cfg.get(host, "host")
         port = self.cfg.get(host, "port")
-        cmd = "ssh -o ServerAliveInterval=60 -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {0} {1}@{2}".format(
-            port, user, ip)
+        serveraliveinterval = self.cfg.get(host, "serveraliveinterval")
+        print(serveraliveinterval)
+        serveraliveinterval_opt = " " if serveraliveinterval == '0' or serveraliveinterval is None else " -o ServerAliveInterval="+serveraliveinterval
+        cmd = "ssh {0} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {1} {2}@{3}".format(
+            serveraliveinterval_opt, port, user, ip)
         print(cmd)
         child = pexpect.spawn(cmd)
         # signal.signal(signal.SIGWINCH, self.sigwinch_passthrough)
@@ -539,6 +550,7 @@ class remote_shell(cmd.Cmd):
         port = input("Input your port: ")
         user = input("Input your user: ")
         password = input("Input your password: ")
+        serveraliveinterval = input("keep server alive second: ")
 
         # encrypt password
         if ENCRYPT_PASSWORD_MODE == opt:
@@ -555,6 +567,7 @@ class remote_shell(cmd.Cmd):
               "\r\nport = " + port +
               "\r\nuser = " + user +
               "\r\npassword = " + enpassword +
+              "\r\nserveraliveinterval = " + serveraliveinterval +
               "\r\nworkdir = " + workdir)
         if "y" == input("confirm the config to be saved.(y/n):"):
             # add section / set option & key
@@ -564,6 +577,7 @@ class remote_shell(cmd.Cmd):
             self.cfg.set(host_no, "port", port)
             self.cfg.set(host_no, "user", user)
             self.cfg.set(host_no, "password", enpassword)
+            self.cfg.set(host_no, "serveraliveinterval", serveraliveinterval)
             self.cfg.set(host_no, "workdir", workdir)
 
             # write to file
