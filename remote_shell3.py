@@ -504,11 +504,13 @@ class remote_shell(cmd.Cmd):
             _ = child.sendline(base64.b64decode(password))
         except pexpect.EOF:
             print("pexpect.EOF")
-            child.close(force=True)
+            if child.isalive():
+                child.close(force=True)
             return
         except pexpect.TIMEOUT:
             print("pexpect.TIMEOUT")
-            child.close(force=True)
+            if child.isalive():
+                child.close(force=True)
             return
 
         child.interact()
