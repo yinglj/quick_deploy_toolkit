@@ -75,6 +75,7 @@ class MyConfigParser(RawConfigParser):
         except NoOptionError:
             return None
 
+
 class remote_shell(cmd.Cmd):
 
     def __init__(self, host):
@@ -286,7 +287,7 @@ class remote_shell(cmd.Cmd):
             self.refresh_menu()
             return False
         else:
-            if parse_temp[0].lower()=='all':
+            if parse_temp[0].lower() == 'all':
                 self.domain = "all"
                 self.host = ""
                 self.refresh_menu()
@@ -297,8 +298,9 @@ class remote_shell(cmd.Cmd):
                     self.host = ""
                     self.refresh_menu()
                     return False
-            print('domain \033[31;1m{}\033[0m is not exists.'.format(parse_temp[0]))
-            
+            print('domain \033[31;1m{}\033[0m is not exists.'.format(
+                parse_temp[0]))
+
         return False
 
     def complete_domain(self, text, line, begidx, endidx):
@@ -350,7 +352,7 @@ class remote_shell(cmd.Cmd):
         if line == '':
             completions = commands
             return completions
-        
+
         if path.partition(' ')[-1] == "" and len(line.split(" ")) == 1:
             # domain, 按主机数量增序排列
             for d, h in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
@@ -365,7 +367,7 @@ class remote_shell(cmd.Cmd):
                 for k, v in self.mapLogin.items():
                     if k.startswith(path):
                         completions.append(k)
-            
+
             for i in commands:
                 if i.startswith(path):
                     completions.append(i)
@@ -381,7 +383,7 @@ class remote_shell(cmd.Cmd):
             for i in bin_path:
                 completions = completions + \
                     [(s.split('/'))[-1] for s in glob.glob(i+"/"+path+"*")]
-        #print(completions)
+        # print(completions)
         return completions
 
     def _complete_path(self, path, line, start_idx, end_idx):

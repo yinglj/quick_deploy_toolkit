@@ -30,30 +30,29 @@ import termios
 import struct
 import fcntl
 import socket
-#todo add set variable to save domain, check host.cfg is existed while set domain.
-#todo add set variable to save host
-#todo show domain host
+# todo add set variable to save domain, check host.cfg is existed while set domain.
+# todo add set variable to save host
+# todo show domain host
 cfg = ConfigParser.ConfigParser()
 
-#The interface displays the configuration definition, which can be adjusted as needed
+# The interface displays the configuration definition, which can be adjusted as needed
 COLUMN_NUM = 3
 HOST_WIDTH = 12
 USER_WIDTH = 12
 IP_WIDTH = 16
 COLUMN_WIDTH = HOST_WIDTH + USER_WIDTH + IP_WIDTH
 BLOCK_NUM = 10
-#Interface display configuration
-#define const variable
+# Interface display configuration
+# define const variable
 ENCRYPT_PASSWORD_MODE = 0
 DECRYPT_PASSWORD_MODE = 1
 
-import glob
 
 def str_count(str):
     import string
     '''Find out the number of Chinese and English, spaces, numbers, and punctuation marks in the string'''
     count_en = count_dg = count_sp = count_zh = count_pu = 0
-    for s in str.decode( 'utf-8' ):
+    for s in str.decode('utf-8'):
         # English
         if s in string.ascii_letters:
             count_en += 1
@@ -71,6 +70,7 @@ def str_count(str):
             count_pu += 1
     return count_zh
 
+
 class remote_shell(cmd.Cmd):
 
     def __init__(self, host):
@@ -83,7 +83,8 @@ class remote_shell(cmd.Cmd):
         self.host = host
         self.config_file = sys.path[0]+'/host.cfg'
         self.domain = "all"
-        self.prompt = '\033[36;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
+        self.prompt = '\033[36;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(
+            self.hostName, self.domain, self.host)
         self.mapDomainHost = defaultdict(list)
         self.refresh_menu()
 
@@ -92,10 +93,11 @@ class remote_shell(cmd.Cmd):
             self.quit()
         except:
             pass
-        
+
     def do_prompt(self, line):
         '''Set command prompt, eg. \"prompt remote shell\"'''
-        self.prompt = '\033[36;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
+        self.prompt = '\033[36;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(
+            self.hostName, self.domain, self.host)
 
     def do_EOF(self, line):
         '''Exit remote_shell.py with EOF.'''
@@ -133,77 +135,94 @@ class remote_shell(cmd.Cmd):
         #    print c, "to=>", d
 
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
-        print("*"+"{0: ^{1}}".format("welcome to use scripts for remoting login",(COLUMN_WIDTH+1)*COLUMN_NUM-1)+"*")  #{}inline{}
+        print("*"+"{0: ^{1}}".format("welcome to use scripts for remoting login",
+              (COLUMN_WIDTH+1)*COLUMN_NUM-1)+"*")  # {}inline{}
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
 
         hostlist = []
-        #for d,h in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=False):   #domain, sorted by increasing number of hosts
-        for d,h in sorted(self.domain_list.items(),key=lambda dict:dict[1],reverse=False):   #domain, sorted by increasing number of hosts
+        # for d,h in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=False):   #domain, sorted by increasing number of hosts
+        # domain, sorted by increasing number of hosts
+        for d, h in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
             if(self.domain != "all" and d != self.domain):
                 continue
-            iNum=0
-                
+            iNum = 0
+
             for i in sorted(self.mapDomainHost[d]):
                 if(iNum % BLOCK_NUM == 0):
-                    hostlist.append("*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH+str_count(d)))     #{: ^38}, 38 width fill space alignment
-                    hostlist.append("*"+"{0: ^{1}}".format(" -"*(int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
-                    hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1, "login", USER_WIDTH+str_count("login"), "IP LIST", IP_WIDTH+str_count("IP LIST")))
-                str1 = "*"+" \033[36;1m{0: <{1}}\033[0m{2: ^{3}}{4: ^{5}}".format(i, HOST_WIDTH-1, self.cfg.get(i,"user"), USER_WIDTH, self.cfg.get(i,"host"), IP_WIDTH)
-                hostlist.append(str1) #host
+                    # {: ^38}, 38 width fill space alignment
+                    hostlist.append(
+                        "*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH+str_count(d)))
+                    hostlist.append(
+                        "*"+"{0: ^{1}}".format(" -"*(int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
+                    hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1,
+                                    "login", USER_WIDTH+str_count("login"), "IP LIST", IP_WIDTH+str_count("IP LIST")))
+                str1 = "*"+" \033[36;1m{0: <{1}}\033[0m{2: ^{3}}{4: ^{5}}".format(
+                    i, HOST_WIDTH-1, self.cfg.get(i, "user"), USER_WIDTH, self.cfg.get(i, "host"), IP_WIDTH)
+                hostlist.append(str1)  # host
                 iNum = iNum + 1
                 if(iNum % BLOCK_NUM == 0):
                     hostlist.append("*"+"*"*COLUMN_WIDTH)
-  
-            while( (iNum % BLOCK_NUM) != 0):    #Complement BLOCK_NUM
+
+            while((iNum % BLOCK_NUM) != 0):  # Complement BLOCK_NUM
                 hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
                 iNum = iNum + 1
 
-            if h % BLOCK_NUM != 0:  #When it is not a multiple of BLOCK_NUM, you only need to add a line: "*"+"*"*COLUMN_WIDTH
+            if h % BLOCK_NUM != 0:  # When it is not a multiple of BLOCK_NUM, you only need to add a line: "*"+"*"*COLUMN_WIDTH
                 hostlist.append("*"+"*"*COLUMN_WIDTH)
-        
-        #Complement the data block that is a multiple of COLUMN_NUM, where 4 lines of fixed characters
-        iBlockNum = (len(hostlist)/(BLOCK_NUM+4))%COLUMN_NUM
+
+        # Complement the data block that is a multiple of COLUMN_NUM, where 4 lines of fixed characters
+        iBlockNum = (len(hostlist)/(BLOCK_NUM+4)) % COLUMN_NUM
         while(iBlockNum % COLUMN_NUM != 0):
-            hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))     #{: ^38}, 38 width fill space alignment
-            hostlist.append("*"+"{0: ^{1}}".format(" -"*(int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
-            hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1, "Login", USER_WIDTH+str_count("Login"), "IP LIST", IP_WIDTH+str_count("IP LIST")))
+            # {: ^38}, 38 width fill space alignment
+            hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
+            hostlist.append("*"+"{0: ^{1}}".format(" -" *
+                            (int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
+            hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1,
+                            "Login", USER_WIDTH+str_count("Login"), "IP LIST", IP_WIDTH+str_count("IP LIST")))
             hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
             iNum1 = 1
-            while( iNum1 % BLOCK_NUM != 0):    #Complement BLOCK_NUM
+            while(iNum1 % BLOCK_NUM != 0):  # Complement BLOCK_NUM
                 hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
                 iNum1 = iNum1 + 1
             hostlist.append("*"+"*"*COLUMN_WIDTH)
             iBlockNum = iBlockNum + 1
-        
+
         #    array1[d] = hostlist
         #print hostlist
         hostlist_size = len(hostlist)
-        for layer in range(int(hostlist_size/COLUMN_NUM/(BLOCK_NUM+4))): #Layer
-            for i in range(BLOCK_NUM+4):     #Column
-                line=""
-                for j in range(COLUMN_NUM): #row
-                    line = line + hostlist[layer*COLUMN_NUM*(BLOCK_NUM+4)+(BLOCK_NUM+4)*j+i]
-                if(line != ("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))*COLUMN_NUM):  #blank line
+        for layer in range(int(hostlist_size/COLUMN_NUM/(BLOCK_NUM+4))):  # Layer
+            for i in range(BLOCK_NUM+4):  # Column
+                line = ""
+                for j in range(COLUMN_NUM):  # row
+                    line = line + \
+                        hostlist[layer*COLUMN_NUM *
+                                 (BLOCK_NUM+4)+(BLOCK_NUM+4)*j+i]
+                if(line != ("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))*COLUMN_NUM):  # blank line
                     print(line+"*")
         help = []
         temp_hint = " HELP $  INPUT HOST.NO TO LOGIN"
-        help.append("{0: <{1}}".format(temp_hint,COLUMN_WIDTH+str_count(temp_hint)))
+        help.append("{0: <{1}}".format(
+            temp_hint, COLUMN_WIDTH+str_count(temp_hint)))
         temp_hint = " exit: quit | set domain: SWITCH DOMAIN"
-        help.append("{0: <{1}}".format(temp_hint,COLUMN_WIDTH+str_count(temp_hint)))
-        for i in range(COLUMN_NUM - 3): #The first two lines "help"
+        help.append("{0: <{1}}".format(
+            temp_hint, COLUMN_WIDTH+str_count(temp_hint)))
+        for i in range(COLUMN_NUM - 3):  # The first two lines "help"
             help.append(" "*COLUMN_WIDTH)
-            i= i+1
+            i = i+1
         help_line = "*"
         #n = 0
         for l in help:
-            help_line = help_line + "{0: <{1}}".format(l, COLUMN_WIDTH-20);
+            help_line = help_line + "{0: <{1}}".format(l, COLUMN_WIDTH-20)
             help_line = help_line + "|"
-        help_line = help_line + " Current domain: \033[31;1m{0: <10} {1: >12}\033[0m".format(self.domain, self.host) + "*"
+        help_line = help_line + \
+            " Current domain: \033[31;1m{0: <10} {1: >12}\033[0m".format(
+                self.domain, self.host) + "*"
         print(help_line)
-    
+
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
-        self.prompt = '\033[36;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
-    
+        self.prompt = '\033[36;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(
+            self.hostName, self.domain, self.host)
+
     def emptyline(self):
         self.refresh_menu()
         self.quit()
@@ -250,7 +269,7 @@ class remote_shell(cmd.Cmd):
             self.refresh_menu()
             return False
         else:
-            if parse_temp[0].lower()=='all':
+            if parse_temp[0].lower() == 'all':
                 self.domain = "all"
                 self.host = ""
                 self.refresh_menu()
@@ -261,15 +280,16 @@ class remote_shell(cmd.Cmd):
                     self.host = ""
                     self.refresh_menu()
                     return False
-            print('domain \033[31;1m{}\033[0m is not exists.'.format(parse_temp[0]))
-            
+            print('domain \033[31;1m{}\033[0m is not exists.'.format(
+                parse_temp[0]))
+
         return False
 
     def complete_domain(self, text, line, begidx, endidx):
         completions_set = [
             'all'
         ]
-        
+
         mline = line.partition(' ')[-1]
         # domain, sorted by host's count
         for d, h in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
@@ -281,15 +301,15 @@ class remote_shell(cmd.Cmd):
 
         offs = len(mline) - len(text)
         return [s[offs:] for s in completions_set if s.startswith(mline)]
-    
-    #重写cmd类的completedefault
+
+    # 重写cmd类的completedefault
     def completedefault(self, text, line, begidx, endidx):
         return self.completenames(text, line, begidx, endidx)
-    
-    #重写cmd类的completenames
+
+    # 重写cmd类的completenames
     def completenames(self, path, line, begidx, endidx):
         #print("path={0}, line={1}, begidx={2}, endidx={3}".format(path, line, begidx, endidx))
-        #if path == "":
+        # if path == "":
         #    dotext = 'do_'+ path
         #    return [a[3:] for a in self.get_names() if a.startswith(dotext)]
         completions = []
@@ -314,21 +334,22 @@ class remote_shell(cmd.Cmd):
         if line == '':
             completions = commands
             return completions
-        
+
         if path.partition(' ')[-1] == "" and len(line.split(" ")) == 1:
-            for d,h in sorted(self.domain_list.items(),key=lambda dict:dict[1],reverse=False):   #domain, 按主机数量增序排列
+            # domain, 按主机数量增序排列
+            for d, h in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
                 if(self.domain != "all" and d != self.domain):
                     continue
-                iNum=0
+                iNum = 0
                 #completions.append("domain "+d)
                 for i in self.mapDomainHost[d]:
                     if i.startswith(path):
                         completions.append(i)
 
-                for k,v in self.mapLogin.items():
+                for k, v in self.mapLogin.items():
                     if k.startswith(path):
                         completions.append(k)
-            
+
             for i in commands:
                 if i.startswith(path):
                     completions.append(i)
@@ -339,23 +360,25 @@ class remote_shell(cmd.Cmd):
             return glob.glob(os.path.join(path, '*'))
         completions = completions + glob.glob(path+'*')
 
-        if len(completions) == 0: #不是目录文件的情况下，返回候选命令
+        if len(completions) == 0:  # 不是目录文件的情况下，返回候选命令
             bin_path = os.environ.get("PATH").split(":")
             for i in bin_path:
-                completions = completions + [(s.split('/'))[-1] for s in glob.glob(i+"/"+path+"*")]
+                completions = completions + \
+                    [(s.split('/'))[-1] for s in glob.glob(i+"/"+path+"*")]
         return completions
 
     def _complete_path(self, path, line, start_idx, end_idx):
-        if path[0]=='~':
+        if path[0] == '~':
             path = os.path.expanduser('~')+path[1:]
         if os.path.isdir(path):
             return glob.glob(os.path.join(path, '*'))
         completions = glob.glob(path+'*')
 
-        if len(completions) == 0: #不是目录文件的情况下，返回候选命令
+        if len(completions) == 0:  # 不是目录文件的情况下，返回候选命令
             bin_path = os.environ.get("PATH").split(":")
             for i in bin_path:
-                completions = completions + [(s.split('/'))[-1] for s in glob.glob(i+"/"+path+"*")]
+                completions = completions + \
+                    [(s.split('/'))[-1] for s in glob.glob(i+"/"+path+"*")]
         return completions
 
     def do_show(self, line):
@@ -394,7 +417,7 @@ class remote_shell(cmd.Cmd):
             self.remote_interactive(self.mapLogin[line])
             return
         if line != "" and line[0] == '!':
-            if len(line)>2 and line[1:3] == "vi":
+            if len(line) > 2 and line[1:3] == "vi":
                 print("can't support !vi or !vim")
                 return False
             command = subprocess.Popen(
@@ -402,7 +425,7 @@ class remote_shell(cmd.Cmd):
             print(command.communicate()[0], end=' ')
             return False
 
-        if len(line)>1 and line[0:2] == "vi":
+        if len(line) > 1 and line[0:2] == "vi":
             print("can't support vi or vim. Interactive command is so on.")
             return False
         self.remote_cmd(self.host, line)
@@ -416,8 +439,8 @@ class remote_shell(cmd.Cmd):
             self.remote_interactive(line)
             return
         self.remote_cmd(self.host, line)
-    
-    #tab自动补齐shell命令的参数
+
+    # tab自动补齐shell命令的参数
     def complete_shell(self, text, line, start_idx, end_idx):
         return self._complete_path(text, line, start_idx, end_idx)
 
@@ -425,7 +448,7 @@ class remote_shell(cmd.Cmd):
         '''Execute the rest of the line as a shell command, eg. \'run ls\', \'run pwd\'.'''
         self.remote_cmd(self.host, line)
 
-    #def sigwinch_passthrough (sig, data):
+    # def sigwinch_passthrough (sig, data):
     #    winsize = self.getwinsize()
     #    global child
     #    child.setwinsize(winsize[0],winsize[1])
@@ -437,8 +460,8 @@ class remote_shell(cmd.Cmd):
         if 'TIOCGWINSZ' in dir(termios):
             TIOCGWINSZ = termios.TIOCGWINSZ
         else:
-            #TIOCGWINSZ = 1074295912L # Assume
-            TIOCGWINSZ = 1074295912 # Assume
+            # TIOCGWINSZ = 1074295912L # Assume
+            TIOCGWINSZ = 1074295912  # Assume
         s = struct.pack('HHHH', 0, 0, 0, 0)
         x = fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ, s)
         return struct.unpack('HHHH', x)[0:2]
@@ -448,7 +471,8 @@ class remote_shell(cmd.Cmd):
         password = self.cfg.get(host, "password")
         ip = self.cfg.get(host, "host")
         port = self.cfg.get(host, "port")
-        cmd = "ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {0} {1}@{2}".format(port, user, ip)
+        cmd = "ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {0} {1}@{2}".format(
+            port, user, ip)
         print(cmd)
         child = pexpect.spawn(cmd)
         #signal.signal(signal.SIGWINCH, self.sigwinch_passthrough)
@@ -472,16 +496,17 @@ class remote_shell(cmd.Cmd):
         child.close(force=True)
 
     def remote_cmd(self, host, line):
-        line = line.replace("\"", "\\\"").replace("$", "\\$").replace("\'", "\\'").replace("`", "\\`")
+        line = line.replace("\"", "\\\"").replace(
+            "$", "\\$").replace("\'", "\\'").replace("`", "\\`")
         line = "\""+line+"\""
         #print "line:{0}".format(line)
         if self.host != "":
-            szCmd = "{0}/remote_cmd.py --domain {1} --ip {2} {3}".format(os.path.dirname(os.path.realpath(__file__)), 
-                self.domain, self.host, line)
+            szCmd = "{0}/remote_cmd.py --domain {1} --ip {2} {3}".format(os.path.dirname(os.path.realpath(__file__)),
+                                                                         self.domain, self.host, line)
         else:
-            szCmd = "{0}/remote_cmd.py --domain {1} {2}".format(os.path.dirname(os.path.realpath(__file__)), 
-                self.domain, line)
-        #print(szCmd)
+            szCmd = "{0}/remote_cmd.py --domain {1} {2}".format(os.path.dirname(os.path.realpath(__file__)),
+                                                                self.domain, line)
+        # print(szCmd)
         command = subprocess.Popen(szCmd, shell=True, stdout=subprocess.PIPE)
         while 1:
             out = command.stdout.readline()
@@ -560,7 +585,7 @@ if __name__ == '__main__':
             os.environ['LD_LIBRARY_PATH'] = os.environ.get(
                 'LD_LIBRARY_PATH')+":"+os.path.dirname(os.path.realpath(__file__))
             os.execve(os.path.realpath(__file__),
-                    sys.argv, os.environ)  # * rerun
+                      sys.argv, os.environ)  # * rerun
 
     import readline
     readline.set_completer_delims(' \t\n')
