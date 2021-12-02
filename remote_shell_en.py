@@ -20,8 +20,6 @@ import time
 #import string
 import os
 import pexpect
-import ConfigParser
-#import configparser
 from collections import Counter
 from collections import defaultdict
 import base64
@@ -30,10 +28,11 @@ import termios
 import struct
 import fcntl
 import socket
+from configparser import RawConfigParser, NoOptionError
+
 # todo add set variable to save domain, check host.cfg is existed while set domain.
 # todo add set variable to save host
 # todo show domain host
-cfg = ConfigParser.ConfigParser()
 
 # The interface displays the configuration definition, which can be adjusted as needed
 COLUMN_NUM = 3
@@ -71,6 +70,14 @@ def str_count(str):
     return count_zh
 
 
+class MyConfigParser(RawConfigParser):
+    def get(self, section, option):
+        try:
+            return RawConfigParser.get(self, section, option)
+        except NoOptionError:
+            return None
+
+
 class remote_shell(cmd.Cmd):
 
     def __init__(self, host):
@@ -106,7 +113,7 @@ class remote_shell(cmd.Cmd):
 
     # Display by block, each block fixed BLOCK_NUM determines that there are multiple hosts in the block, default is 10
     def refresh_menu(self):
-        self.cfg = ConfigParser.ConfigParser()
+        self.cfg = MyConfigParser(allow_no_value=True)
         self.cfg.read(self.config_file)
 
         self.mapDomainHost.clear()
@@ -154,9 +161,9 @@ class remote_shell(cmd.Cmd):
                         "*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH+str_count(d)))
                     hostlist.append(
                         "*"+"{0: ^{1}}".format(" -"*(int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
-                    hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1,
+                    hostlist.append("*"+" {0: <{1}}{2: <{3}}{4: <{5}}".format("HOST.NO", HOST_WIDTH-1,
                                     "login", USER_WIDTH+str_count("login"), "IP LIST", IP_WIDTH+str_count("IP LIST")))
-                str1 = "*"+" \033[36;1m{0: <{1}}\033[0m{2: ^{3}}{4: ^{5}}".format(
+                str1 = "*"+" \033[36;1m{0: <{1}}\033[0m{2: <{3}}{4: <{5}}".format(
                     i, HOST_WIDTH-1, self.cfg.get(i, "user"), USER_WIDTH, self.cfg.get(i, "host"), IP_WIDTH)
                 hostlist.append(str1)  # host
                 iNum = iNum + 1
@@ -200,7 +207,7 @@ class remote_shell(cmd.Cmd):
                 if(line != ("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))*COLUMN_NUM):  # blank line
                     print(line+"*")
         help = []
-        temp_hint = " HELP $  INPUT HOST.NO TO LOGIN"
+        temp_hint = " HELP $  raw_input HOST.NO TO LOGIN"
         help.append("{0: <{1}}".format(
             temp_hint, COLUMN_WIDTH+str_count(temp_hint)))
         temp_hint = " exit: quit | set domain: SWITCH DOMAIN"
@@ -341,7 +348,7 @@ class remote_shell(cmd.Cmd):
                 if(self.domain != "all" and d != self.domain):
                     continue
                 iNum = 0
-                #completions.append("domain "+d)
+                # completions.append("domain "+d)
                 for i in self.mapDomainHost[d]:
                     if i.startswith(path):
                         completions.append(i)
@@ -471,11 +478,13 @@ class remote_shell(cmd.Cmd):
         password = self.cfg.get(host, "password")
         ip = self.cfg.get(host, "host")
         port = self.cfg.get(host, "port")
-        cmd = "ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {0} {1}@{2}".format(
-            port, user, ip)
-        print(cmd)
+        serveraliveinterval = self.cfg.get(host, "serveraliveinterval")
+        serveraliveinterval_opt = " " if serveraliveinterval == '0' or serveraliveinterval is None else " -o TCPKeepAlive=yes -o ServerAliveInterval=" + serveraliveinterval
+        cmd = "ssh {0} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {1} {2}@{3}".format(
+            serveraliveinterval_opt, port, user, ip)
+        # print(cmd)
         child = pexpect.spawn(cmd)
-        #signal.signal(signal.SIGWINCH, self.sigwinch_passthrough)
+        # signal.signal(signal.SIGWINCH, self.sigwinch_passthrough)
         winsize = self.getwinsize()
         child.setwinsize(winsize[0], winsize[1])
         try:
@@ -483,12 +492,14 @@ class remote_shell(cmd.Cmd):
             # base64解码后多一个回车键符，需要剪掉一位
             _ = child.sendline(base64.b64decode(password))
         except pexpect.EOF:
-            print("pexpect.EOF")
-            child.close(force=True)
+            print("can not connect to {}".format(host))
+            if child.isalive():
+                child.close(force=True)
             return
         except pexpect.TIMEOUT:
-            print("pexpect.TIMEOUT")
-            child.close(force=True)
+            print("connect timeout {}".format(host))
+            if child.isalive():
+                child.close(force=True)
             return
 
         child.interact()
@@ -499,7 +510,7 @@ class remote_shell(cmd.Cmd):
         line = line.replace("\"", "\\\"").replace(
             "$", "\\$").replace("\'", "\\'").replace("`", "\\`")
         line = "\""+line+"\""
-        #print "line:{0}".format(line)
+        # print "line:{0}".format(line)
         if self.host != "":
             szCmd = "{0}/remote_cmd.py --domain {1} --ip {2} {3}".format(os.path.dirname(os.path.realpath(__file__)),
                                                                          self.domain, self.host, line)
@@ -507,29 +518,31 @@ class remote_shell(cmd.Cmd):
             szCmd = "{0}/remote_cmd.py --domain {1} {2}".format(os.path.dirname(os.path.realpath(__file__)),
                                                                 self.domain, line)
         # print(szCmd)
-        command = subprocess.Popen(szCmd, shell=True, stdout=subprocess.PIPE)
+        command = subprocess.Popen(
+            szCmd, shell=True, stdout=subprocess.PIPE, universal_newlines=True)
         while 1:
             out = command.stdout.readline()
-            if out.decode() == '':
+            if out.decode('unicode_escape') == '':
                 break
-            print(out.decode(), end='')
-        # print command.communicate()[0],
+            print(out.decode('unicode_escape'), end='')
+        command.stdout.close()
 
     def config_host(self, opt):
         '''Config the host file'''
         print("Config the host file:" + self.config_file)
-        host_no = input("Input your host_no: ")
+        host_no = raw_input("raw_input your host_no: ")
         # section already exists return
         if True == self.cfg.has_section(host_no):
             print("host_no:" + host_no + " already exists!")
             return
 
-        # get userinput
-        domain = input("Input your domain: ")
-        host = input("Input your host: ")
-        port = input("Input your port: ")
-        user = input("Input your user: ")
-        password = input("Input your password: ")
+        # get userraw_input
+        domain = raw_input("raw_input your domain: ")
+        host = raw_input("raw_input your host: ")
+        port = raw_input("raw_input your port: ")
+        user = raw_input("raw_input your user: ")
+        password = raw_input("raw_input your password: ")
+        serveraliveinterval = raw_input("keep server alive second: ")
 
         # encrypt password
         if ENCRYPT_PASSWORD_MODE == opt:
@@ -538,7 +551,7 @@ class remote_shell(cmd.Cmd):
                 password.encode('utf-8')).decode('utf-8')
         else:
             enpassword = password
-        workdir = input("Input your workdir: ")
+        workdir = raw_input("raw_input your workdir: ")
 
         print("[" + host_no + "]"
               "\r\ndomain = " + domain +
@@ -546,8 +559,9 @@ class remote_shell(cmd.Cmd):
               "\r\nport = " + port +
               "\r\nuser = " + user +
               "\r\npassword = " + enpassword +
+              "\r\nserveraliveinterval = " + serveraliveinterval +
               "\r\nworkdir = " + workdir)
-        if "y" == input("confirm the config to be saved.(y/n):"):
+        if "y" == raw_input("confirm the config to be saved.(y/n):"):
             # add section / set option & key
             self.cfg.add_section(host_no)
             self.cfg.set(host_no, "domain", domain)
@@ -555,6 +569,7 @@ class remote_shell(cmd.Cmd):
             self.cfg.set(host_no, "port", port)
             self.cfg.set(host_no, "user", user)
             self.cfg.set(host_no, "password", enpassword)
+            self.cfg.set(host_no, "serveraliveinterval", serveraliveinterval)
             self.cfg.set(host_no, "workdir", workdir)
 
             # write to file
@@ -564,7 +579,7 @@ class remote_shell(cmd.Cmd):
 
     def rm_host(self):
         '''rm the host_no cofig'''
-        host_no = input("Input the host_no you want to rm: ")
+        host_no = raw_input("raw_input the host_no you want to rm: ")
         # section not exists return
         if False == self.cfg.has_section(host_no):
             print("host_no:" + host_no + " not exists!")

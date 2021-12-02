@@ -18,17 +18,35 @@ import pexpect
 import time
 import re
 import collections
-import ConfigParser
 import threading
 import base64
 import argparse
 from collections import Counter
 from collections import defaultdict
 from collections import OrderedDict
+from configparser import RawConfigParser, NoOptionError
+import sys
 
-mutex = threading.Lock()
-cfg = ConfigParser.ConfigParser()
+
+class MyConfigParser(RawConfigParser):
+    def get(self, section, option):
+        try:
+            return RawConfigParser.get(self, section, option)
+        except NoOptionError:
+            return None
+
+
 #global spec_host
+COLUMN_NUM = 3
+HOST_WIDTH = 12
+USER_WIDTH = 12
+IP_WIDTH = 16
+COLUMN_WIDTH = HOST_WIDTH + USER_WIDTH + IP_WIDTH
+BLOCK_NUM = 10
+OUT_PUT_WIDTH = COLUMN_NUM * COLUMN_WIDTH + COLUMN_NUM + 1
+STR_OUTPUT_PROMOTE = "# host:"
+mutex = threading.Lock()
+cfg = MyConfigParser(allow_no_value=True)
 spec_cmd = ""
 cmds = []
 mapStdout = defaultdict(list)
@@ -81,6 +99,7 @@ def init_command(domain_config, spec_host, command):
     host = ""
     workdir = ""
     domain = ""
+    hostno = ""
     thread_list = []
     for i in s:
         # szCmd=""
@@ -105,9 +124,10 @@ def init_command(domain_config, spec_host, command):
         if domain_config != "" and domain_config != "all" and domain != domain_config:
             continue
 
+        hostno = i
         if spec_host == i or spec_host == host or spec_host == "":
             my_thread = threading.Thread(target=onethread_run_ssh, args=(
-                user, password, host, port, workdir, command,))
+                domain, hostno, user, password, host, port, workdir, command,))
             #print "-------------------1----------------------------------------------------------------------"
             my_thread.start()
             #print "-------------------2----------------------------------------------------------------------"
@@ -118,23 +138,24 @@ def init_command(domain_config, spec_host, command):
     for key, value in sorted(mapStdout.items(), key=lambda dict: dict[0], reverse=False):
         for i in value:
             print(i, end='')
-    mapStdout.clear()
+    # mapStdout.clear()
 
 
-def onethread_run_ssh(user, password, host, port, workdir, command):
-    #spec_cmd = "ssh -t -p {} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no {} {}@{} ".format(port, background, user, host)
+def onethread_run_ssh(domain, hostno, user, password, host, port, workdir, command):
     spec_cmd = "ssh -p {} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no {} {}@{} ".format(
         port, background, user, host)
     spec_cmd += command
-    #print "spec_cmd:"+spec_cmd
-    run_ssh(host, spec_cmd, password)
+    # print("spec_cmd:"+spec_cmd
+    run_ssh(domain, hostno, host, spec_cmd, password)
 
 
 def run_command(domain_config, spec_host, command):
     init_command(domain_config, spec_host, command)
 
 
-def run_ssh(host, cmd, passwd):
+def run_ssh(domain, hostno, host, cmd, passwd):
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
     child = pexpect.spawn(cmd)
     try:
         child.expect('(!*)password:(!*)')
@@ -143,27 +164,38 @@ def run_ssh(host, cmd, passwd):
             passwd_decode = passwd_decode[:-1]
         _ = child.sendline(passwd_decode)  # base64解码后多一个回车键符，需要剪掉一位
     except pexpect.EOF:
-        # print("pexpect.EOF")
-        child.close(force=True)
+        output_info(domain, hostno, host,
+                    "can not connect to {}-{}-{}\n".format(domain, hostno, host))
+        if child.isalive():
+            child.close(force=True)
         return
     except pexpect.TIMEOUT:
-        print("pexpect.TIMEOUT")
-        child.close(force=True)
+        output_info(domain, hostno, host,
+                    "connect timeout {}-{}-{}\n".format(domain, hostno, host))
+        if child.isalive():
+            child.close(force=True)
         return
 
     child.expect(pexpect.EOF, timeout=60)
     if mutex.acquire():
-        # print("-----------------------------------------------------------------------------------------")
-        # print("# host:\033[36;1m{}\033[0m".format(host))
-        #print "-----------------------------------------------------------------------------------------",
-        #print child.before.decode(),
-        mapStdout[host].append("-"*124 + "\n")
-        mapStdout[host].append(
-            "# host:\033[36;1m{0: ^116}\033[0m#\n".format(host))
-        mapStdout[host].append("-"*124)
-        mapStdout[host].append(child.before.decode())
+        abc = child.before
+        import chardet
+        d = chardet.detect(abc)
+        output_msg = child.before.decode('unicode_escape')
+        output_info(domain, hostno, host, output_msg)
     mutex.release()
     child.close(force=True)
+
+
+def output_info(domain, hostno, host, msg):
+    index_count = OUT_PUT_WIDTH - \
+        len(domain) - len(hostno) - len(host) + 1
+    mapStdout[host].append("-"*OUT_PUT_WIDTH + "\n")
+    mapStdout[host].append(
+        "{0}\033[36;1m{1} {2} {3: <{4}}\033[0m#\n".format(STR_OUTPUT_PROMOTE, domain, hostno, host, index_count))
+    mapStdout[host].append("-"*OUT_PUT_WIDTH + "\n")
+    mapStdout[host].append(msg)
+    mapStdout[host].append("-"*OUT_PUT_WIDTH + "\n")
 
 
 hostcfg = '''please config filename: host.cfg
@@ -193,9 +225,7 @@ if __name__ == '__main__':
     args, unknowns = parser.parse_known_args()
     command = ' '.join(unknowns).replace("\"", "\\\"").replace(
         "$", "\\$")  # .replace("\'", "\\'")
-    # sprint(command)
-    #print args
-    #print "unknowns:{}".format(unknowns)
+    # print ("{} unknowns:{}".format(args, unknowns))
 
     if command == "":
         parser.print_usage()

@@ -237,7 +237,6 @@ class remote_shell(cmd.Cmd):
         print(help_line)
 
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
-        # self.prompt = '\033[36;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(self.hostName, self.domain, self.host)
         self.prompt = '\033[33;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(
             self.hostName, self.domain, self.host)
 
@@ -383,7 +382,6 @@ class remote_shell(cmd.Cmd):
             for i in bin_path:
                 completions = completions + \
                     [(s.split('/'))[-1] for s in glob.glob(i+"/"+path+"*")]
-        # print(completions)
         return completions
 
     def _complete_path(self, path, line, start_idx, end_idx):
@@ -491,11 +489,10 @@ class remote_shell(cmd.Cmd):
         ip = self.cfg.get(host, "host")
         port = self.cfg.get(host, "port")
         serveraliveinterval = self.cfg.get(host, "serveraliveinterval")
-        print(serveraliveinterval)
-        serveraliveinterval_opt = " " if serveraliveinterval == '0' or serveraliveinterval is None else " -o ServerAliveInterval="+serveraliveinterval
+        serveraliveinterval_opt = " " if serveraliveinterval == '0' or serveraliveinterval is None else " -o TCPKeepAlive=yes -o ServerAliveInterval=" + serveraliveinterval
         cmd = "ssh {0} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {1} {2}@{3}".format(
             serveraliveinterval_opt, port, user, ip)
-        print(cmd)
+        # print(cmd)
         child = pexpect.spawn(cmd)
         # signal.signal(signal.SIGWINCH, self.sigwinch_passthrough)
         winsize = self.getwinsize()
@@ -505,12 +502,12 @@ class remote_shell(cmd.Cmd):
             # base64解码后多一个回车键符，需要剪掉一位
             _ = child.sendline(base64.b64decode(password))
         except pexpect.EOF:
-            print("pexpect.EOF")
+            print("can not connect to {}".format(host))
             if child.isalive():
                 child.close(force=True)
             return
         except pexpect.TIMEOUT:
-            print("pexpect.TIMEOUT")
+            print("connect timeout {}".format(host))
             if child.isalive():
                 child.close(force=True)
             return
@@ -531,13 +528,14 @@ class remote_shell(cmd.Cmd):
             szCmd = "{0}/remote_cmd3.py --domain {1} {2}".format(os.path.dirname(os.path.realpath(__file__)),
                                                                  self.domain, line)
         # print(szCmd)
-        command = subprocess.Popen(szCmd, shell=True, stdout=subprocess.PIPE)
+        command = subprocess.Popen(
+            szCmd, shell=True, stdout=subprocess.PIPE, universal_newlines=True)
         while 1:
             out = command.stdout.readline()
-            if out.decode() == '':
+            if out == '':
                 break
-            print(out.decode(), end='')
-        # print command.communicate()[0],
+            print(out.strip())
+        command.stdout.close()
 
     def config_host(self, opt):
         '''Config the host file'''
