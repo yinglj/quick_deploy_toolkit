@@ -22,7 +22,7 @@ if not os.path.exists(log_path):
     os.mkdir(log_path)
 
 
-class Logger(object):
+class XLogger(object):
     def __init__(self, name, config_file='config.xml'):
         cConfigHandle = CConfigHandle(config_file)
         logpath = cConfigHandle.get_value('config', 'logpath')

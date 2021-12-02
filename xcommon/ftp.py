@@ -11,7 +11,7 @@ if 2 == sys.version_info.major:
         sys.setdefaultencoding(defaultencoding)
 
 
-class CFtpTransfer:
+class XFtpTransfer:
     ftp = ftplib.FTP()
     bIsDir = False
     path = ""
@@ -20,7 +20,7 @@ class CFtpTransfer:
         self.ftp.set_debuglevel(2)  # 打开调试级别2，显示详细信息
         # self.ftp.set_pasv(0)      #0主动模式 1 #被动模式
         self.ftp.connect(host, port)
-        self.log_file = open('CFtpTransfer.log', 'wb')
+        self.log_file = open('XFtpTransfer.log', 'wb')
         print("1")
 
     def __del__(self):

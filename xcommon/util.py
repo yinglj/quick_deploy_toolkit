@@ -3,7 +3,7 @@ import pwd
 import sys
 
 
-class CUtil:
+class XUtil:
     @staticmethod
     def get_username():
         return pwd.getpwuid(os.getuid())[0]

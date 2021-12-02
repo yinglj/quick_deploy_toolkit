@@ -28,7 +28,7 @@ import socket
 from collections import Counter
 from collections import defaultdict
 from xcommon.config import *
-from xcommon.util import CUtil
+from xcommon.util import XUtil
 
 # todo add set variable to save domain, check host.cfg is existed while set domain.
 # todo add set variable to save host
@@ -126,11 +126,11 @@ class remote_shell(cmd.Cmd):
                 if(iNum % BLOCK_NUM == 0):
                     # {: ^38}, 38宽度补空格对齐
                     hostlist.append(
-                        "*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH-CUtil.str_count(d)))
+                        "*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH-XUtil.str_count(d)))
                     hostlist.append(
                         "*"+"{0: ^{1}}".format(" -"*(int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
                     hostlist.append("*"+" {0: <{1}}{2: <{3}}{4: <{5}}".format(
-                        "HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH-CUtil.str_count("用户"), "IP列表", IP_WIDTH-CUtil.str_count("IP列表")))
+                        "HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH-XUtil.str_count("用户"), "IP列表", IP_WIDTH-XUtil.str_count("IP列表")))
                 str1 = "*"+" \033[36;1m{0: <{1}}\033[0m{2:<{3}}{4: <{5}}".format(
                     i, HOST_WIDTH-1, self.cfg.get(i, "user"), USER_WIDTH, self.cfg.get(i, "host"), IP_WIDTH)
                 hostlist.append(str1)  # host
@@ -153,7 +153,7 @@ class remote_shell(cmd.Cmd):
             hostlist.append("*"+"{0: ^{1}}".format(" -" *
                             (int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
             hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1,
-                            "用户", USER_WIDTH-CUtil.str_count("用户"), "IP列表", IP_WIDTH-CUtil.str_count("IP列表")))
+                            "用户", USER_WIDTH-XUtil.str_count("用户"), "IP列表", IP_WIDTH-XUtil.str_count("IP列表")))
             hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
             iNum1 = 1
             while(iNum1 % BLOCK_NUM != 0):  # 补足BLOCK_NUM
@@ -179,10 +179,10 @@ class remote_shell(cmd.Cmd):
         # help.append("{0: <{1}}".format(" exit: 退出 | set domain: 切换主机域",COLUMN_WIDTH+7))  #7为里面包含了7个汉字
         temp_hint = " 帮  助 $  输入HOST.NO,登录对应主机"
         help.append("{0: <{1}}".format(temp_hint, COLUMN_WIDTH -
-                    CUtil.str_count(temp_hint)))  # 10为里面包含了10个汉字
+                    XUtil.str_count(temp_hint)))  # 10为里面包含了10个汉字
         temp_hint = " exit: 退出 | set domain: 切换主机域"
         help.append("{0: <{1}}".format(temp_hint, COLUMN_WIDTH -
-                    CUtil.str_count(temp_hint)))  # 7为里面包含了7个汉字
+                    XUtil.str_count(temp_hint)))  # 7为里面包含了7个汉字
         for i in range(COLUMN_NUM - 3):  # 前面的两行help
             help.append(" "*COLUMN_WIDTH)
             i = i+1

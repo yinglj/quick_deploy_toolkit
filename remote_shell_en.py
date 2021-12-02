@@ -29,7 +29,7 @@ import socket
 from collections import Counter
 from collections import defaultdict
 from xcommon.config import *
-from xcommon.util import CUtil
+from xcommon.util import XUtil
 
 # todo add set variable to save domain, check host.cfg is existed while set domain.
 # todo add set variable to save host
@@ -118,11 +118,11 @@ class remote_shell(cmd.Cmd):
                 if(iNum % BLOCK_NUM == 0):
                     # {: ^38}, 38 width fill space alignment
                     hostlist.append(
-                        "*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH+CUtil.str_count(d)))
+                        "*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH+XUtil.str_count(d)))
                     hostlist.append(
                         "*"+"{0: ^{1}}".format(" -"*(int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
                     hostlist.append("*"+" {0: <{1}}{2: <{3}}{4: <{5}}".format("HOST.NO", HOST_WIDTH-1,
-                                    "login", USER_WIDTH+CUtil.str_count("login"), "IP LIST", IP_WIDTH+CUtil.str_count("IP LIST")))
+                                    "login", USER_WIDTH+XUtil.str_count("login"), "IP LIST", IP_WIDTH+XUtil.str_count("IP LIST")))
                 str1 = "*"+" \033[36;1m{0: <{1}}\033[0m{2: <{3}}{4: <{5}}".format(
                     i, HOST_WIDTH-1, self.cfg.get(i, "user"), USER_WIDTH, self.cfg.get(i, "host"), IP_WIDTH)
                 hostlist.append(str1)  # host
@@ -145,7 +145,7 @@ class remote_shell(cmd.Cmd):
             hostlist.append("*"+"{0: ^{1}}".format(" -" *
                             (int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
             hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1,
-                            "Login", USER_WIDTH+CUtil.str_count("Login"), "IP LIST", IP_WIDTH+CUtil.str_count("IP LIST")))
+                            "Login", USER_WIDTH+XUtil.str_count("Login"), "IP LIST", IP_WIDTH+XUtil.str_count("IP LIST")))
             hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
             iNum1 = 1
             while(iNum1 % BLOCK_NUM != 0):  # Complement BLOCK_NUM
@@ -169,10 +169,10 @@ class remote_shell(cmd.Cmd):
         help = []
         temp_hint = " HELP $  raw_input HOST.NO TO LOGIN"
         help.append("{0: <{1}}".format(
-            temp_hint, COLUMN_WIDTH+CUtil.str_count(temp_hint)))
+            temp_hint, COLUMN_WIDTH+XUtil.str_count(temp_hint)))
         temp_hint = " exit: quit | set domain: SWITCH DOMAIN"
         help.append("{0: <{1}}".format(
-            temp_hint, COLUMN_WIDTH+CUtil.str_count(temp_hint)))
+            temp_hint, COLUMN_WIDTH+XUtil.str_count(temp_hint)))
         for i in range(COLUMN_NUM - 3):  # The first two lines "help"
             help.append(" "*COLUMN_WIDTH)
             i = i+1

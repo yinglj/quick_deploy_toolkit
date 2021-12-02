@@ -13,7 +13,7 @@ if 2 == sys.version_info.major:
         sys.setdefaultencoding(defaultencoding)
 
 
-class COracleHandle(object):
+class XOracleHandle(object):
     def __init__(self, user, pwd, ip, port, sid):
         # print ("cx_Oracle.version:", orcl.version)
         dsn = orcl.makedsn(ip, port, sid)
@@ -78,7 +78,7 @@ class COracleHandle(object):
         return sqlRes
 
 
-class CMysqlHandle(object):
+class XMysqlHandle(object):
     ''' 定义一个 MySQL 操作类'''
 
     def __init__(self, host, username, password, database, port):
