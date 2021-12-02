@@ -24,29 +24,11 @@ import argparse
 from collections import Counter
 from collections import defaultdict
 from collections import OrderedDict
-from configparser import RawConfigParser, NoOptionError
-import sys
+from xcommon.config import *
 
 
-class MyConfigParser(RawConfigParser):
-    def get(self, section, option):
-        try:
-            return RawConfigParser.get(self, section, option)
-        except NoOptionError:
-            return None
-
-
-#global spec_host
-COLUMN_NUM = 3
-HOST_WIDTH = 12
-USER_WIDTH = 12
-IP_WIDTH = 16
-COLUMN_WIDTH = HOST_WIDTH + USER_WIDTH + IP_WIDTH
-BLOCK_NUM = 10
-OUT_PUT_WIDTH = COLUMN_NUM * COLUMN_WIDTH + COLUMN_NUM + 1
-STR_OUTPUT_PROMOTE = "# host:"
 mutex = threading.Lock()
-cfg = MyConfigParser(allow_no_value=True)
+cfg = XConfigParser(allow_no_value=True)
 spec_cmd = ""
 cmds = []
 mapStdout = defaultdict(list)

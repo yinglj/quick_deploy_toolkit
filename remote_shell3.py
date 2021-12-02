@@ -19,61 +19,20 @@ import subprocess
 import string
 import os
 import pexpect
-from collections import Counter
-from collections import defaultdict
 import base64
 import signal
 import termios
 import struct
 import fcntl
 import socket
-from configparser import RawConfigParser, NoOptionError
+from collections import Counter
+from collections import defaultdict
+from xcommon.config import *
+from xcommon.util import CUtil
 
 # todo add set variable to save domain, check host.cfg is existed while set domain.
 # todo add set variable to save host
 # todo show domain host
-
-# 界面显示配置定义，这块可以根据需要调整
-COLUMN_NUM = 3
-HOST_WIDTH = 12
-USER_WIDTH = 12
-IP_WIDTH = 16
-COLUMN_WIDTH = HOST_WIDTH + USER_WIDTH + IP_WIDTH
-BLOCK_NUM = 10
-# 界面显示配置
-# 常量定义
-ENCRYPT_PASSWORD_MODE = 0
-DECRYPT_PASSWORD_MODE = 1
-
-
-def str_count(str):
-    '''找出字符串中的中英文、空格、数字、标点符号个数'''
-    count_en = count_dg = count_sp = count_zh = count_pu = 0
-    for s in str:
-        # 英文
-        if s in string.ascii_letters:
-            count_en += 1
-        # 数字
-        elif s.isdigit():
-            count_dg += 1
-        # 空格
-        elif s.isspace():
-            count_sp += 1
-        # 中文，除了英文之外，剩下的字符认为就是中文
-        elif s.isalpha():
-            count_zh += 1
-        # 特殊字符
-        else:
-            count_pu += 1
-    return count_zh
-
-
-class MyConfigParser(RawConfigParser):
-    def get(self, section, option):
-        try:
-            return RawConfigParser.get(self, section, option)
-        except NoOptionError:
-            return None
 
 
 class remote_shell(cmd.Cmd):
@@ -122,7 +81,7 @@ class remote_shell(cmd.Cmd):
 
     # 采用按块显示的方式，每个块固定BLOCK_NUM决定块里有多个主机，默认为10条
     def refresh_menu(self):
-        self.cfg = MyConfigParser(allow_no_value=True)
+        self.cfg = XConfigParser(allow_no_value=True)
         self.cfg.read(self.config_file)
 
         self.mapDomainHost.clear()
@@ -167,11 +126,11 @@ class remote_shell(cmd.Cmd):
                 if(iNum % BLOCK_NUM == 0):
                     # {: ^38}, 38宽度补空格对齐
                     hostlist.append(
-                        "*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH-str_count(d)))
+                        "*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH-CUtil.str_count(d)))
                     hostlist.append(
                         "*"+"{0: ^{1}}".format(" -"*(int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
                     hostlist.append("*"+" {0: <{1}}{2: <{3}}{4: <{5}}".format(
-                        "HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH-str_count("用户"), "IP列表", IP_WIDTH-str_count("IP列表")))
+                        "HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH-CUtil.str_count("用户"), "IP列表", IP_WIDTH-CUtil.str_count("IP列表")))
                 str1 = "*"+" \033[36;1m{0: <{1}}\033[0m{2:<{3}}{4: <{5}}".format(
                     i, HOST_WIDTH-1, self.cfg.get(i, "user"), USER_WIDTH, self.cfg.get(i, "host"), IP_WIDTH)
                 hostlist.append(str1)  # host
@@ -194,7 +153,7 @@ class remote_shell(cmd.Cmd):
             hostlist.append("*"+"{0: ^{1}}".format(" -" *
                             (int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
             hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1,
-                            "用户", USER_WIDTH-str_count("用户"), "IP列表", IP_WIDTH-str_count("IP列表")))
+                            "用户", USER_WIDTH-CUtil.str_count("用户"), "IP列表", IP_WIDTH-CUtil.str_count("IP列表")))
             hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
             iNum1 = 1
             while(iNum1 % BLOCK_NUM != 0):  # 补足BLOCK_NUM
@@ -220,10 +179,10 @@ class remote_shell(cmd.Cmd):
         # help.append("{0: <{1}}".format(" exit: 退出 | set domain: 切换主机域",COLUMN_WIDTH+7))  #7为里面包含了7个汉字
         temp_hint = " 帮  助 $  输入HOST.NO,登录对应主机"
         help.append("{0: <{1}}".format(temp_hint, COLUMN_WIDTH -
-                    str_count(temp_hint)))  # 10为里面包含了10个汉字
+                    CUtil.str_count(temp_hint)))  # 10为里面包含了10个汉字
         temp_hint = " exit: 退出 | set domain: 切换主机域"
         help.append("{0: <{1}}".format(temp_hint, COLUMN_WIDTH -
-                    str_count(temp_hint)))  # 7为里面包含了7个汉字
+                    CUtil.str_count(temp_hint)))  # 7为里面包含了7个汉字
         for i in range(COLUMN_NUM - 3):  # 前面的两行help
             help.append(" "*COLUMN_WIDTH)
             i = i+1

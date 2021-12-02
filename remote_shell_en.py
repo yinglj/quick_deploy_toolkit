@@ -11,71 +11,31 @@
 # password = Password of remote Linux/UNIX server, for root user.
 # host = IP Addreess of remote Linux/UNIX server, no hostname
 # ---------------------------------------------------------------------------------------
+
 from __future__ import print_function
 import glob
 import sys
 import cmd
 import subprocess
 import time
-#import string
 import os
 import pexpect
-from collections import Counter
-from collections import defaultdict
 import base64
 import signal
 import termios
 import struct
 import fcntl
 import socket
-from configparser import RawConfigParser, NoOptionError
+from collections import Counter
+from collections import defaultdict
+from xcommon.config import *
+from xcommon.util import CUtil
 
 # todo add set variable to save domain, check host.cfg is existed while set domain.
 # todo add set variable to save host
 # todo show domain host
 
 # The interface displays the configuration definition, which can be adjusted as needed
-COLUMN_NUM = 3
-HOST_WIDTH = 12
-USER_WIDTH = 12
-IP_WIDTH = 16
-COLUMN_WIDTH = HOST_WIDTH + USER_WIDTH + IP_WIDTH
-BLOCK_NUM = 10
-# Interface display configuration
-# define const variable
-ENCRYPT_PASSWORD_MODE = 0
-DECRYPT_PASSWORD_MODE = 1
-
-
-def str_count(str):
-    import string
-    '''Find out the number of Chinese and English, spaces, numbers, and punctuation marks in the string'''
-    count_en = count_dg = count_sp = count_zh = count_pu = 0
-    for s in str.decode('utf-8'):
-        # English
-        if s in string.ascii_letters:
-            count_en += 1
-        # digital
-        elif s.isdigit():
-            count_dg += 1
-        # space
-        elif s.isspace():
-            count_sp += 1
-        # Chinese
-        elif s.isalpha():
-            count_zh += 1
-        # Special Character
-        else:
-            count_pu += 1
-    return count_zh
-
-
-class MyConfigParser(RawConfigParser):
-    def get(self, section, option):
-        try:
-            return RawConfigParser.get(self, section, option)
-        except NoOptionError:
-            return None
 
 
 class remote_shell(cmd.Cmd):
@@ -113,7 +73,7 @@ class remote_shell(cmd.Cmd):
 
     # Display by block, each block fixed BLOCK_NUM determines that there are multiple hosts in the block, default is 10
     def refresh_menu(self):
-        self.cfg = MyConfigParser(allow_no_value=True)
+        self.cfg = XConfigParser(allow_no_value=True)
         self.cfg.read(self.config_file)
 
         self.mapDomainHost.clear()
@@ -158,11 +118,11 @@ class remote_shell(cmd.Cmd):
                 if(iNum % BLOCK_NUM == 0):
                     # {: ^38}, 38 width fill space alignment
                     hostlist.append(
-                        "*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH+str_count(d)))
+                        "*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH+CUtil.str_count(d)))
                     hostlist.append(
                         "*"+"{0: ^{1}}".format(" -"*(int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
                     hostlist.append("*"+" {0: <{1}}{2: <{3}}{4: <{5}}".format("HOST.NO", HOST_WIDTH-1,
-                                    "login", USER_WIDTH+str_count("login"), "IP LIST", IP_WIDTH+str_count("IP LIST")))
+                                    "login", USER_WIDTH+CUtil.str_count("login"), "IP LIST", IP_WIDTH+CUtil.str_count("IP LIST")))
                 str1 = "*"+" \033[36;1m{0: <{1}}\033[0m{2: <{3}}{4: <{5}}".format(
                     i, HOST_WIDTH-1, self.cfg.get(i, "user"), USER_WIDTH, self.cfg.get(i, "host"), IP_WIDTH)
                 hostlist.append(str1)  # host
@@ -185,7 +145,7 @@ class remote_shell(cmd.Cmd):
             hostlist.append("*"+"{0: ^{1}}".format(" -" *
                             (int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
             hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1,
-                            "Login", USER_WIDTH+str_count("Login"), "IP LIST", IP_WIDTH+str_count("IP LIST")))
+                            "Login", USER_WIDTH+CUtil.str_count("Login"), "IP LIST", IP_WIDTH+CUtil.str_count("IP LIST")))
             hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
             iNum1 = 1
             while(iNum1 % BLOCK_NUM != 0):  # Complement BLOCK_NUM
@@ -209,10 +169,10 @@ class remote_shell(cmd.Cmd):
         help = []
         temp_hint = " HELP $  raw_input HOST.NO TO LOGIN"
         help.append("{0: <{1}}".format(
-            temp_hint, COLUMN_WIDTH+str_count(temp_hint)))
+            temp_hint, COLUMN_WIDTH+CUtil.str_count(temp_hint)))
         temp_hint = " exit: quit | set domain: SWITCH DOMAIN"
         help.append("{0: <{1}}".format(
-            temp_hint, COLUMN_WIDTH+str_count(temp_hint)))
+            temp_hint, COLUMN_WIDTH+CUtil.str_count(temp_hint)))
         for i in range(COLUMN_NUM - 3):  # The first two lines "help"
             help.append(" "*COLUMN_WIDTH)
             i = i+1
