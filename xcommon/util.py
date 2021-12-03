@@ -1,10 +1,8 @@
 import os
 import pwd
 import sys
+from xcommon.xconfig import *
 
-INPUT_ = input
-if 2 == sys.version_info.major:
-    INPUT_ = raw_input
 
 class XUtil:
     @staticmethod

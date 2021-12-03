@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 from configparser import RawConfigParser, NoOptionError
 import re
+import sys
 
 # 界面显示配置定义，这块可以根据需要调整
 COLUMN_NUM = 3
@@ -14,6 +15,11 @@ STR_OUTPUT_PROMOTE = "# host:"
 # 常量定义
 ENCRYPT_PASSWORD_MODE = 0
 DECRYPT_PASSWORD_MODE = 1
+
+INPUT_ = input
+if 2 == sys.version_info.major:
+    INPUT_ = raw_input
+
 
 LANGUAGE_MAP = {
     '0': {

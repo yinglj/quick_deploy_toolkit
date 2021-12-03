@@ -26,9 +26,9 @@ import termios
 import struct
 import fcntl
 import socket
+from xcommon.xconfig import *
 from collections import Counter
 from collections import defaultdict
-from xcommon.config import *
 from xcommon.util import XUtil
 
 # todo add set variable to save domain, check host.cfg is existed while set domain.
@@ -112,7 +112,7 @@ class remote_shell(cmd.Cmd):
         hostlist = []
         hostno_hint = XLangHelper.get_hint(self.lang, "hostno_hint")
         user_hint = XLangHelper.get_hint(self.lang, "user_hint")
-        iplist_hint = XLangHelper.get_hint(self.lang, "iplist_hint")   
+        iplist_hint = XLangHelper.get_hint(self.lang, "iplist_hint")
         # for d,h in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=False):   #domain, sorted by increasing number of hosts
         # domain, sorted by increasing number of hosts
         for d, h in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
@@ -500,28 +500,34 @@ class remote_shell(cmd.Cmd):
         command = subprocess.Popen(
             szCmd, shell=True, stdout=subprocess.PIPE, universal_newlines=True)
         while 1:
-            out = command.stdout.readline()
-            if out.decode('unicode_escape') == '':
-                break
-            print(out.decode('unicode_escape'), end='')
+            if 2 == sys.version_info.major:
+                out = command.stdout.readline()
+                if out.decode('unicode_escape') == '':
+                    break
+                print(out.decode('unicode_escape'), end='')
+            else:
+                out = command.stdout.readline()
+                if out == '':
+                    break
+                print(out.strip())
         command.stdout.close()
 
     def config_host(self, opt):
         '''Config the host file'''
         print("Config the host file:" + self.config_file)
-        host_no = raw_input("raw_input your host_no: ")
+        host_no = INPUT_("input your host_no: ")
         # section already exists return
         if True == self.cfg.has_section(host_no):
             print("host_no:" + host_no + " already exists!")
             return
 
-        # get userraw_input
-        domain = raw_input("raw_input your domain: ")
-        host = raw_input("raw_input your host: ")
-        port = raw_input("raw_input your port: ")
-        user = raw_input("raw_input your user: ")
-        password = raw_input("raw_input your password: ")
-        serveraliveinterval = raw_input("keep server alive second: ")
+        # get userinput
+        domain = INPUT_("input your domain: ")
+        host = INPUT_("input your host: ")
+        port = INPUT_("input your port: ")
+        user = INPUT_("input your user: ")
+        password = INPUT_("input your password: ")
+        serveraliveinterval = INPUT_("keep server alive second: ")
 
         # encrypt password
         if ENCRYPT_PASSWORD_MODE == opt:
@@ -530,7 +536,7 @@ class remote_shell(cmd.Cmd):
                 password.encode('utf-8')).decode('utf-8')
         else:
             enpassword = password
-        workdir = raw_input("raw_input your workdir: ")
+        workdir = INPUT_("input your workdir: ")
 
         print("[" + host_no + "]"
               "\r\ndomain = " + domain +
@@ -540,7 +546,7 @@ class remote_shell(cmd.Cmd):
               "\r\npassword = " + enpassword +
               "\r\nserveraliveinterval = " + serveraliveinterval +
               "\r\nworkdir = " + workdir)
-        if "y" == raw_input("confirm the config to be saved.(y/n):"):
+        if "y" == INPUT_("confirm the config to be saved.(y/n):"):
             # add section / set option & key
             self.cfg.add_section(host_no)
             self.cfg.set(host_no, "domain", domain)
@@ -558,7 +564,7 @@ class remote_shell(cmd.Cmd):
 
     def rm_host(self):
         '''rm the host_no cofig'''
-        host_no = raw_input("raw_input the host_no you want to rm: ")
+        host_no = INPUT_("input the host_no you want to rm: ")
         # section not exists return
         if False == self.cfg.has_section(host_no):
             print("host_no:" + host_no + " not exists!")

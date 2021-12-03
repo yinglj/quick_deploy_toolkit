@@ -25,9 +25,9 @@ import termios
 import struct
 import fcntl
 import socket
+from xcommon.xconfig import *
 from collections import Counter
 from collections import defaultdict
-from xcommon.config import *
 from xcommon.util import XUtil
 
 # todo add set variable to save domain, check host.cfg is existed while set domain.

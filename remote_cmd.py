@@ -21,10 +21,10 @@ import collections
 import threading
 import base64
 import argparse
+from xcommon.xconfig import *
 from collections import Counter
 from collections import defaultdict
 from collections import OrderedDict
-from xcommon.config import *
 
 
 class CRemoteCmd(object):
@@ -115,6 +115,10 @@ class CRemoteCmd(object):
                 if j == 'domain':
                     domain = self.cfg.get(i, j)
             if domain_config != "" and domain_config != "all" and domain != domain_config:
+                continue
+
+            if i == "global":
+                self.lang = self.cfg.get(i, "LANG")
                 continue
 
             hostno = i
