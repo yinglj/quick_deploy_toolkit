@@ -81,6 +81,9 @@ class remote_shell(cmd.Cmd):
         self.mapLogin = {}
         for i in self.cfg.sections():
             # print self.cfg.options(i)
+            if i == "global":
+                self.lang = self.cfg.get(i, "LANG")
+                continue
             for j in self.cfg.options(i):
                 # print self.cfg.get(i,j)
                 if j == "domain":
