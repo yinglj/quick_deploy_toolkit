@@ -6,18 +6,12 @@ import pymysql
 import os
 import sys
 
-if 2 == sys.version_info.major:
-    defaultencoding = 'utf-8'
-    if sys.getdefaultencoding() != defaultencoding:
-        reload(sys)
-        sys.setdefaultencoding(defaultencoding)
-
 
 class XOracleHandle(object):
     def __init__(self, user, pwd, ip, port, sid):
         # print ("cx_Oracle.version:", orcl.version)
-        dsn = orcl.makedsn(ip, port, sid)
-        self.connect = orcl.connect(user, pwd, dsn)
+        self.dsn = orcl.makedsn(ip, port, sid)
+        self.connect = orcl.connect(user, pwd, self.dsn)
         self.cursor = self.connect.cursor()
 
     def __del__(self):

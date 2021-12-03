@@ -4,19 +4,13 @@ import os
 import sys
 import ftplib
 
-if 2 == sys.version_info.major:
-    defaultencoding = 'utf-8'
-    if sys.getdefaultencoding() != defaultencoding:
-        reload(sys)
-        sys.setdefaultencoding(defaultencoding)
-
 
 class XFtpTransfer:
-    ftp = ftplib.FTP()
-    bIsDir = False
-    path = ""
 
     def __init__(self, host, port='21'):
+        self.ftp = ftplib.FTP()
+        self.bIsDir = False
+        self.path = ""
         self.ftp.set_debuglevel(2)  # 打开调试级别2，显示详细信息
         # self.ftp.set_pasv(0)      #0主动模式 1 #被动模式
         self.ftp.connect(host, port)
