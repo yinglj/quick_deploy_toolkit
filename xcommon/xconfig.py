@@ -15,6 +15,9 @@ STR_OUTPUT_PROMOTE = "# host:"
 # 常量定义
 ENCRYPT_PASSWORD_MODE = 0
 DECRYPT_PASSWORD_MODE = 1
+LANGUAGE_CHINESE = '0'
+LANGUAGE_ENGLISH = '1'
+
 
 INPUT_ = input
 if 2 == sys.version_info.major:
@@ -22,7 +25,7 @@ if 2 == sys.version_info.major:
 
 
 LANGUAGE_MAP = {
-    '0': {
+    LANGUAGE_CHINESE: {
         "login_hint": " 帮  助 $  输入HOST.NO,登录对应主机",
         "welcome_hint": "欢迎使用远程登录系统",
         "hostno_hint": "HOST.NO",
@@ -30,8 +33,8 @@ LANGUAGE_MAP = {
         "iplist_hint": "IP列表",
         "domain_hint": " exit: 退出 | set domain: 切换主机域",
         "cur_domain_hint": " 当前域：",
-    },  
-    '1': {
+    },
+    LANGUAGE_ENGLISH: {
         "login_hint": " HELP $  input HOST.NO TO LOGIN",
         "welcome_hint": "welcome to use scripts for remoting login",
         "hostno_hint": "HOST.NO",
@@ -39,7 +42,7 @@ LANGUAGE_MAP = {
         "iplist_hint": "IP LIST",
         "domain_hint": " exit: quit | set domain: SWITCH DOMAIN",
         "cur_domain_hint": " Current domain:",
-    },  
+    },
 }
 
 

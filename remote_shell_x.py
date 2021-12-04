@@ -105,13 +105,13 @@ class remote_shell(cmd.Cmd):
         #    print c, "to=>", d
 
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
-        if 3 == sys.version_info.major and '0' == self.lang:
+        if 3 == sys.version_info.major and LANGUAGE_CHINESE == self.lang:
             welcome_hint_length = (COLUMN_WIDTH+1)*COLUMN_NUM-11
-        elif '1' == self.lang:
+        elif LANGUAGE_ENGLISH == self.lang:
             welcome_hint_length = (COLUMN_WIDTH+1)*COLUMN_NUM-1
         else:
             welcome_hint_length = (COLUMN_WIDTH+1)*COLUMN_NUM+9
-        
+
         print("*"+"{0: ^{1}}".format(XLangHelper.get_hint(self.lang, "welcome_hint"),
               welcome_hint_length)+"*")  # {}inline{}
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
@@ -134,7 +134,7 @@ class remote_shell(cmd.Cmd):
                         "*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH+XUtil.str_count(d)))
                     hostlist.append(
                         "*"+"{0: ^{1}}".format(" -"*(int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
-                    if 3 == sys.version_info.major and '0' == self.lang:
+                    if 3 == sys.version_info.major and LANGUAGE_CHINESE == self.lang:
                         hostlist.append("*"+" {0: <{1}}{2: <{3}}{4: <{5}}".format(
                             hostno_hint, HOST_WIDTH-1, user_hint, USER_WIDTH-XUtil.str_count(user_hint), iplist_hint, IP_WIDTH-XUtil.str_count(iplist_hint)))
                     else:
@@ -162,7 +162,7 @@ class remote_shell(cmd.Cmd):
             hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
             hostlist.append("*"+"{0: ^{1}}".format(" -" *
                             (int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
-            if 3 == sys.version_info.major and '0' == self.lang:
+            if 3 == sys.version_info.major and LANGUAGE_CHINESE == self.lang:
                 hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format(
                     hostno_hint, HOST_WIDTH-1, user_hint, USER_WIDTH-XUtil.str_count(user_hint), iplist_hint, IP_WIDTH-XUtil.str_count(iplist_hint)))
             else:
@@ -191,7 +191,7 @@ class remote_shell(cmd.Cmd):
         help = []
         temp_hint = XLangHelper.get_hint(self.lang, "login_hint")
         temp_hint = XLangHelper.get_hint(self.lang, "domain_hint")
-        if 3 == sys.version_info.major and '0' == self.lang:
+        if 3 == sys.version_info.major and LANGUAGE_CHINESE == self.lang:
             help.append("{0: <{1}}".format(
                 temp_hint, COLUMN_WIDTH-XUtil.str_count(temp_hint)))
             help.append("{0: <{1}}".format(
@@ -209,7 +209,7 @@ class remote_shell(cmd.Cmd):
         for l in help:
             help_line = help_line + "{0: <{1}}".format(l, COLUMN_WIDTH-20)
             help_line = help_line + "|"
-        if '1' == self.lang:
+        if LANGUAGE_ENGLISH == self.lang:
             help_line = help_line + \
                 "{0} \033[31;1m{1: <10} {2: >12}\033[0m".format(
                     XLangHelper.get_hint(self.lang, "cur_domain_hint"), self.domain, self.host) + "*"

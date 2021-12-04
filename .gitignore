@@ -7,3 +7,6 @@ d
 host.cfg
 .DS_Store
 host.cfg
+xcommon/*.pyc
+xcommon/__pycache__
+xcommon/*.pyc
