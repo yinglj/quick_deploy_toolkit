@@ -105,10 +105,13 @@ class remote_shell(cmd.Cmd):
         #    print c, "to=>", d
 
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
-        if '1' == self.lang:
+        if 3 == sys.version_info.major and '0' == self.lang:
+            welcome_hint_length = (COLUMN_WIDTH+1)*COLUMN_NUM-11
+        elif '1' == self.lang:
             welcome_hint_length = (COLUMN_WIDTH+1)*COLUMN_NUM-1
         else:
             welcome_hint_length = (COLUMN_WIDTH+1)*COLUMN_NUM+9
+        
         print("*"+"{0: ^{1}}".format(XLangHelper.get_hint(self.lang, "welcome_hint"),
               welcome_hint_length)+"*")  # {}inline{}
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
@@ -131,8 +134,13 @@ class remote_shell(cmd.Cmd):
                         "*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH+XUtil.str_count(d)))
                     hostlist.append(
                         "*"+"{0: ^{1}}".format(" -"*(int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
-                    hostlist.append("*"+" {0: <{1}}{2: <{3}}{4: <{5}}".format(hostno_hint, HOST_WIDTH-1,
-                                    user_hint, USER_WIDTH+XUtil.str_count(user_hint), iplist_hint, IP_WIDTH+XUtil.str_count(iplist_hint)))
+                    if 3 == sys.version_info.major and '0' == self.lang:
+                        hostlist.append("*"+" {0: <{1}}{2: <{3}}{4: <{5}}".format(
+                            hostno_hint, HOST_WIDTH-1, user_hint, USER_WIDTH-XUtil.str_count(user_hint), iplist_hint, IP_WIDTH-XUtil.str_count(iplist_hint)))
+                    else:
+                        hostlist.append("*"+" {0: <{1}}{2: <{3}}{4: <{5}}".format(
+                            hostno_hint, HOST_WIDTH-1, user_hint, USER_WIDTH+XUtil.str_count(user_hint), iplist_hint, IP_WIDTH+XUtil.str_count(iplist_hint)))
+
                 str1 = "*"+" \033[36;1m{0: <{1}}\033[0m{2: <{3}}{4: <{5}}".format(
                     i, HOST_WIDTH-1, self.cfg.get(i, "user"), USER_WIDTH, self.cfg.get(i, "host"), IP_WIDTH)
                 hostlist.append(str1)  # host
@@ -154,8 +162,12 @@ class remote_shell(cmd.Cmd):
             hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
             hostlist.append("*"+"{0: ^{1}}".format(" -" *
                             (int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
-            hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format(hostno_hint, HOST_WIDTH-1,
-                            user_hint, USER_WIDTH+XUtil.str_count(user_hint), iplist_hint, IP_WIDTH+XUtil.str_count(iplist_hint)))
+            if 3 == sys.version_info.major and '0' == self.lang:
+                hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format(
+                    hostno_hint, HOST_WIDTH-1, user_hint, USER_WIDTH-XUtil.str_count(user_hint), iplist_hint, IP_WIDTH-XUtil.str_count(iplist_hint)))
+            else:
+                hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format(
+                    hostno_hint, HOST_WIDTH-1, user_hint, USER_WIDTH+XUtil.str_count(user_hint), iplist_hint, IP_WIDTH+XUtil.str_count(iplist_hint)))
             hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
             iNum1 = 1
             while(iNum1 % BLOCK_NUM != 0):  # Complement BLOCK_NUM
@@ -178,11 +190,17 @@ class remote_shell(cmd.Cmd):
                     print(line+"*")
         help = []
         temp_hint = XLangHelper.get_hint(self.lang, "login_hint")
-        help.append("{0: <{1}}".format(
-            temp_hint, COLUMN_WIDTH+XUtil.str_count(temp_hint)))
         temp_hint = XLangHelper.get_hint(self.lang, "domain_hint")
-        help.append("{0: <{1}}".format(
-            temp_hint, COLUMN_WIDTH+XUtil.str_count(temp_hint)))
+        if 3 == sys.version_info.major and '0' == self.lang:
+            help.append("{0: <{1}}".format(
+                temp_hint, COLUMN_WIDTH-XUtil.str_count(temp_hint)))
+            help.append("{0: <{1}}".format(
+                temp_hint, COLUMN_WIDTH-XUtil.str_count(temp_hint)))
+        else:
+            help.append("{0: <{1}}".format(
+                temp_hint, COLUMN_WIDTH+XUtil.str_count(temp_hint)))
+            help.append("{0: <{1}}".format(
+                temp_hint, COLUMN_WIDTH+XUtil.str_count(temp_hint)))
         for i in range(COLUMN_NUM - 3):  # The first two lines "help"
             help.append(" "*COLUMN_WIDTH)
             i = i+1
