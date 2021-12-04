@@ -88,4 +88,3 @@ class XUtil:
                         (", ".join(map(str, range_[:-1])), str(range_[-1])))))
             else:
                 return ui
-            continue

@@ -32,7 +32,7 @@ LANGUAGE_MAP = {
         "cur_domain_hint": " 当前域：",
     },  
     '1': {
-        "login_hint": " HELP $  raw_input HOST.NO TO LOGIN",
+        "login_hint": " HELP $  input HOST.NO TO LOGIN",
         "welcome_hint": "welcome to use scripts for remoting login",
         "hostno_hint": "HOST.NO",
         "user_hint": "login",

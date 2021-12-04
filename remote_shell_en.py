@@ -170,7 +170,7 @@ class remote_shell(cmd.Cmd):
                 if(line != ("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))*COLUMN_NUM):  # blank line
                     print(line+"*")
         help = []
-        temp_hint = " HELP $  raw_input HOST.NO TO LOGIN"
+        temp_hint = " HELP $  input HOST.NO TO LOGIN"
         help.append("{0: <{1}}".format(
             temp_hint, COLUMN_WIDTH+XUtil.str_count(temp_hint)))
         temp_hint = " exit: quit | set domain: SWITCH DOMAIN"

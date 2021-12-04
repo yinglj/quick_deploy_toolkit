@@ -105,8 +105,12 @@ class remote_shell(cmd.Cmd):
         #    print c, "to=>", d
 
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
+        if '1' == self.lang:
+            welcome_hint_length = (COLUMN_WIDTH+1)*COLUMN_NUM-1
+        else:
+            welcome_hint_length = (COLUMN_WIDTH+1)*COLUMN_NUM+9
         print("*"+"{0: ^{1}}".format(XLangHelper.get_hint(self.lang, "welcome_hint"),
-              (COLUMN_WIDTH+1)*COLUMN_NUM-1)+"*")  # {}inline{}
+              welcome_hint_length)+"*")  # {}inline{}
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
 
         hostlist = []
@@ -187,9 +191,14 @@ class remote_shell(cmd.Cmd):
         for l in help:
             help_line = help_line + "{0: <{1}}".format(l, COLUMN_WIDTH-20)
             help_line = help_line + "|"
-        help_line = help_line + \
-            "{0} \033[31;1m{1: <10} {2: >12}\033[0m".format(
-                XLangHelper.get_hint(self.lang, "cur_domain_hint"), self.domain, self.host) + "*"
+        if '1' == self.lang:
+            help_line = help_line + \
+                "{0} \033[31;1m{1: <10} {2: >12}\033[0m".format(
+                    XLangHelper.get_hint(self.lang, "cur_domain_hint"), self.domain, self.host) + "*"
+        else:
+            help_line = help_line + "{0} \033[31;1m{1: <10} {2: >14}\033[0m".format(
+                XLangHelper.get_hint(self.lang, "cur_domain_hint"), self.domain, self.host) + " "*(COLUMN_WIDTH-35) + "*"
+
         print(help_line)
 
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
