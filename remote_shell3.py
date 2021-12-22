@@ -195,7 +195,7 @@ class remote_shell(cmd.Cmd):
             help_line = help_line + "{0: <{1}}".format(l, COLUMN_WIDTH-20)
             help_line = help_line + "|"
         help_line = help_line + " 当前域：\033[31;1m{0: <10} {1: >15}\033[0m".format(
-            self.domain, self.host) + " "*(COLUMN_WIDTH-35) + "*"
+            self.domain, self.host) + " "*(COLUMN_WIDTH-35-XUtil.str_count(self.domain)) + "*"
         print(help_line)
 
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
@@ -454,7 +454,7 @@ class remote_shell(cmd.Cmd):
         serveraliveinterval_opt = " " if serveraliveinterval == '0' or serveraliveinterval is None else " -o TCPKeepAlive=yes -o ServerAliveInterval=" + serveraliveinterval
         cmd = "ssh {0} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {1} {2}@{3}".format(
             serveraliveinterval_opt, port, user, ip)
-        # print(cmd)
+        print(cmd)
         child = pexpect.spawn(cmd)
         # signal.signal(signal.SIGWINCH, self.sigwinch_passthrough)
         winsize = self.getwinsize()
