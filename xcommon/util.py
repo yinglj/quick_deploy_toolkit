@@ -2,7 +2,8 @@ import os
 import pwd
 import sys
 from xcommon.xconfig import *
-
+import io
+import chardet
 
 class XUtil:
     @staticmethod
@@ -84,7 +85,40 @@ class XUtil:
                 if len(range_) == 1:
                     print(template.format(*range_))
                 else:
-                    print(template.format(" or ".join(
-                        (", ".join(map(str, range_[:-1])), str(range_[-1])))))
+                    print(
+                        template.format(" or ".join(
+                            (", ".join(map(str,
+                                           range_[:-1])), str(range_[-1])))))
             else:
                 return ui
+
+    # decode output, using perline mode for mixed encode.
+    @staticmethod
+    def decode_msg(in_msg):
+        if chardet.detect(in_msg)['encoding'] == 'ascii':
+            msg = io.StringIO(in_msg.decode())
+        else:
+            msg = io.StringIO(in_msg.decode("unicode_escape"))
+        output_msg = ""
+        while True:
+            line = msg.readline().encode('ISO-8859-1')
+            if len(line) == 0:  # Zero length indicates EOF
+                break
+            d = chardet.detect(line)
+            if d['encoding'] == 'GB2312':
+                output_msg = output_msg + line.decode('gb18030')
+            elif d['encoding'] == 'utf-8':
+                output_msg = output_msg + line.decode('utf-8')
+            elif d['encoding'] == 'ISO-8859-9':
+                output_msg = output_msg + line.decode('gb18030')
+            elif d['encoding'] == 'ISO-8859-1':
+                output_msg = output_msg + line.decode('gb18030')
+            elif d['encoding'] == 'TIS-620':
+                output_msg = output_msg + line.decode('gb18030')
+            elif d['encoding'] == 'ascii':
+                output_msg = output_msg + line.decode('ascii')
+            else:
+                print(line)
+                output_msg = output_msg + line.decode('unicode_escape').encode(
+                    'ISO-8859-1').decode("utf-8", 'ignore')
+        return output_msg
