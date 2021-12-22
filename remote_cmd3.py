@@ -26,6 +26,7 @@ from typing import OrderedDict
 from collections import Counter
 from collections import defaultdict
 from collections import OrderedDict
+from xcommon.util import XUtil
 
 
 class CRemoteCmd3(object):
@@ -170,17 +171,17 @@ class CRemoteCmd3(object):
 
         child.expect(pexpect.EOF, timeout=60)
         if self.mutex.acquire():
-            abc = child.before
-            import chardet
-            d = chardet.detect(abc)
-            output_msg = child.before.decode('unicode_escape')
+            output_msg = XUtil.decode_msg(child.before)
             self.output_info(domain, hostno, host, output_msg)
         self.mutex.release()
         child.close(force=True)
 
     def output_info(self, domain, hostno, host, msg):
         index_count = OUT_PUT_WIDTH - \
-            len(domain) - len(hostno) - len(host) + 1
+                    len(STR_OUTPUT_PROMOTE) - \
+                    len(domain)- XUtil.str_count(domain) - \
+                    len(hostno) - XUtil.str_count(hostno) - \
+                    + 3 # space + space + # in format string
         self.mapStdout[host].append("-"*OUT_PUT_WIDTH + "\n")
         self.mapStdout[host].append(
             "{0}\033[36;1m{1} {2} {3: <{4}}\033[0m#\n".format(STR_OUTPUT_PROMOTE, domain, hostno, host, index_count))
