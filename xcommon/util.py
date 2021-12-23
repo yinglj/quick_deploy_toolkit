@@ -98,27 +98,45 @@ class XUtil:
         if chardet.detect(in_msg)['encoding'] == 'ascii':
             msg = io.StringIO(in_msg.decode())
         else:
-            msg = io.StringIO(in_msg.decode("unicode_escape"))
+            try:
+                msg = io.StringIO(in_msg.decode("unicode_escape"))
+            except UnicodeDecodeError as e:
+                msg = io.StringIO(in_msg.decode())
         output_msg = ""
         while True:
-            line = msg.readline().encode('ISO-8859-1')
+            try:
+                line = msg.readline().encode('ISO-8859-1')
+            except UnicodeEncodeError as e:
+                line = msg.readline().encode('utf-8')
             if len(line) == 0:  # Zero length indicates EOF
                 break
             d = chardet.detect(line)
-            if d['encoding'] == 'GB2312':
-                output_msg = output_msg + line.decode('gb18030')
-            elif d['encoding'] == 'utf-8':
-                output_msg = output_msg + line.decode('utf-8')
-            elif d['encoding'] == 'ISO-8859-9':
-                output_msg = output_msg + line.decode('gb18030')
-            elif d['encoding'] == 'ISO-8859-1':
-                output_msg = output_msg + line.decode('gb18030')
-            elif d['encoding'] == 'TIS-620':
-                output_msg = output_msg + line.decode('gb18030')
-            elif d['encoding'] == 'ascii':
-                output_msg = output_msg + line.decode('ascii')
-            else:
-                print(line)
-                output_msg = output_msg + line.decode('unicode_escape').encode(
-                    'ISO-8859-1').decode("utf-8", 'ignore')
+            #print(d['encoding'])
+            try:
+                if d['encoding'] == 'GB2312':
+                    output_msg = output_msg + line.decode('gb18030')
+                elif d['encoding'] == 'utf-8':
+                    output_msg = output_msg + line.decode('utf-8')
+                elif d['encoding'] == 'ISO-8859-9':
+                    output_msg = output_msg + line.decode('gb18030')
+                elif d['encoding'] == 'ISO-8859-1':
+                    output_msg = output_msg + line.decode('gb18030')
+                elif d['encoding'] == 'TIS-620':
+                    output_msg = output_msg + line.decode('gb18030')
+                elif d['encoding'] == 'ascii':
+                    #print("{}{}".format(line, line.decode('ascii')))
+                    output_msg = output_msg + line.decode('ascii')
+                else:
+                    output_msg = output_msg + line.decode('unicode_escape').encode(
+                        'ISO-8859-1').decode("utf-8", 'ignore')
+            except UnicodeDecodeError as e:
+                print(e)
+                continue
+            except IOError as e:
+                print(e)
+            except ValueError as e:
+                print(e)
+            finally:
+                continue
+
         return output_msg
