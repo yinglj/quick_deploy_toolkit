@@ -137,6 +137,6 @@ class XUtil:
             except ValueError as e:
                 print(e)
             finally:
-                continue
+                pass
 
         return output_msg
