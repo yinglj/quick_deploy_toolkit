@@ -518,11 +518,11 @@ class remote_shell(cmd.Cmd):
         line = "\""+line+"\""
         # print "line:{0}".format(line)
         if self.host != "":
-            szCmd = "{0}/remote_cmd.py --domain {1} --ip {2} {3}".format(os.path.dirname(os.path.realpath(__file__)),
-                                                                         self.domain, self.host, line)
+            szCmd = "{0}/remote_cmd3.py --domain {1} --ip {2} {3}".format(os.path.dirname(os.path.realpath(__file__)),
+                                                                          self.domain, self.host, line)
         else:
-            szCmd = "{0}/remote_cmd.py --domain {1} {2}".format(os.path.dirname(os.path.realpath(__file__)),
-                                                                self.domain, line)
+            szCmd = "{0}/remote_cmd3.py --domain {1} {2}".format(os.path.dirname(os.path.realpath(__file__)),
+                                                                 self.domain, line)
         # print(szCmd)
         command = subprocess.Popen(
             szCmd, shell=True, stdout=subprocess.PIPE, universal_newlines=True)

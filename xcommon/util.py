@@ -5,6 +5,7 @@ from xcommon.xconfig import *
 import io
 import chardet
 
+
 class XUtil:
     @staticmethod
     def get_username():
@@ -104,31 +105,21 @@ class XUtil:
                 msg = io.StringIO(in_msg.decode())
         output_msg = ""
         while True:
+            term_encoding = sys.stdout.encoding
+            line = msg.readline()
             try:
                 line = msg.readline().encode('ISO-8859-1')
             except UnicodeEncodeError as e:
                 line = msg.readline().encode('utf-8')
             if len(line) == 0:  # Zero length indicates EOF
                 break
-            d = chardet.detect(line)
-            #print(d['encoding'])
+            orig_encoding = chardet.detect(line)['encoding']
             try:
-                if d['encoding'] == 'GB2312':
-                    output_msg = output_msg + line.decode('gb18030')
-                elif d['encoding'] == 'utf-8':
-                    output_msg = output_msg + line.decode('utf-8')
-                elif d['encoding'] == 'ISO-8859-9':
-                    output_msg = output_msg + line.decode('gb18030')
-                elif d['encoding'] == 'ISO-8859-1':
-                    output_msg = output_msg + line.decode('gb18030')
-                elif d['encoding'] == 'TIS-620':
-                    output_msg = output_msg + line.decode('gb18030')
-                elif d['encoding'] == 'ascii':
-                    #print("{}{}".format(line, line.decode('ascii')))
-                    output_msg = output_msg + line.decode('ascii')
-                else:
-                    output_msg = output_msg + line.decode('unicode_escape').encode(
-                        'ISO-8859-1').decode("utf-8", 'ignore')
+                if orig_encoding == None:
+                    orig_encoding = 'unicode_escape'
+                output_msg = output_msg + \
+                    line.decode(orig_encoding).encode(
+                        term_encoding).decode("utf-8", 'ignore')
             except UnicodeDecodeError as e:
                 print(e)
                 continue
