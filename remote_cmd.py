@@ -138,7 +138,7 @@ class CRemoteCmd(object):
         # mapStdout.clear()
 
     def onethread_run_ssh(self, domain, hostno, user, password, host, port, workdir, command):
-        spec_cmd = "ssh -p {} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no {} {}@{} ".format(
+        spec_cmd = "ssh -p {} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -t {} {}@{} ".format(
             port, background, user, host)
         spec_cmd += command
         # print("spec_cmd:"+spec_cmd
