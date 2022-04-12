@@ -20,6 +20,7 @@ import ConfigParser
 import base64
 import argparse
 import threading
+from xcommon.util import XUtil
 
 mutex = threading.Lock()
 cfg = ConfigParser.ConfigParser()
@@ -38,7 +39,8 @@ def read_cfg(filename):
 
 
 def run_scp(spec_domain, spec_host, filename, spec_dir):
-    read_cfg(sys.path[0] + '/host.cfg')
+    # read_cfg(sys.path[0] + '/host.cfg')
+    read_cfg(XUtil.get_host('host.cfg'))
     s = cfg.sections()
     user = ""
     password = ""

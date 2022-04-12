@@ -45,7 +45,8 @@ class remote_shell(cmd.Cmd):
         self.his = []
         self.hostName = socket.gethostname()
         self.host = host
-        self.config_file = sys.path[0]+'/host.cfg'
+        self.config_file = XUtil.get_host('host.cfg')
+        # self.config_file = sys.path[0]+'/host.cfg'
         self.domain = "all"
         self.prompt = '\033[36;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(
             self.hostName, self.domain, self.host)

@@ -12,6 +12,13 @@ class XUtil:
         return pwd.getpwuid(os.getuid())[0]
 
     @staticmethod
+    def get_host(bak_name):
+        config_file = sys.path[0] + '/../bak/' + bak_name
+        if not os.path.exists(config_file):
+            config_file = sys.path[0] + '/' + bak_name
+        return config_file
+
+    @staticmethod
     def str_count(str):
         import string
         '''Find out the number of Chinese and English, spaces, numbers, and punctuation marks in the string'''

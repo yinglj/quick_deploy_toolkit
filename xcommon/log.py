@@ -38,7 +38,7 @@ class XLogger(object):
         # 日志输出格式
         #self.formatter = logging.Formatter('[%(asctime)s]-%(name)s-%(levelname)s-%(message)s')
         self.formatter = logging.Formatter(
-            '[%(asctime)s][%(filename)s][%(name)s][line:%(lineno)d][%(levelname)s] %(message)s'
+            '%(asctime)s - %(filename)s - %(name)s[:%(lineno)d][%(levelname)s] %(message)s'
             # , datefmt='%Y-%m-%d,%H:%M:%S.%f'
         )
 

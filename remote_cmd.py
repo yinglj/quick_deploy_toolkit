@@ -25,6 +25,7 @@ from xcommon.xconfig import *
 from collections import Counter
 from collections import defaultdict
 from collections import OrderedDict
+from xcommon.util import XUtil
 
 
 class CRemoteCmd(object):
@@ -62,7 +63,8 @@ class CRemoteCmd(object):
     # diff host1 or ip_addr
 
     def init_command(self, domain_config, spec_host, command):
-        self.read_cfg(sys.path[0]+"/host.cfg")
+        self.read_cfg(XUtil.get_host('host.cfg'))
+        # self.read_cfg(sys.path[0]+"/host.cfg")
         # read_cfg(domain_config)
         s = self.cfg.sections()
         cmd_argv = []

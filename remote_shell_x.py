@@ -45,10 +45,12 @@ class remote_shell(cmd.Cmd):
         #self.intro = '''Enter \"help\" for instructions'''
         self.secs = 1.0
         self.count = 3
+        self.lang = '1'
         self.his = []
         self.hostName = socket.gethostname()
         self.host = host
-        self.config_file = sys.path[0]+'/host.cfg'
+        self.config_file = XUtil.get_host('host.cfg')
+        # self.config_file = sys.path[0]+'/host.cfg'
         self.domain = "all"
         self.prompt = '\033[36;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(
             self.hostName, self.domain, self.host)
@@ -113,7 +115,7 @@ class remote_shell(cmd.Cmd):
             welcome_hint_length = (COLUMN_WIDTH+1)*COLUMN_NUM+9
 
         print("*"+"{0: ^{1}}".format(XLangHelper.get_hint(self.lang, "welcome_hint"),
-              welcome_hint_length)+"*")  # {}inline{}
+                                     welcome_hint_length)+"*")  # {}inline{}
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
 
         hostlist = []
@@ -161,7 +163,7 @@ class remote_shell(cmd.Cmd):
             # {: ^38}, 38 width fill space alignment
             hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
             hostlist.append("*"+"{0: ^{1}}".format(" -" *
-                            (int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
+                                                   (int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
             if 3 == sys.version_info.major and LANGUAGE_CHINESE == self.lang:
                 hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format(
                     hostno_hint, HOST_WIDTH-1, user_hint, USER_WIDTH-XUtil.str_count(user_hint), iplist_hint, IP_WIDTH-XUtil.str_count(iplist_hint)))
@@ -177,7 +179,7 @@ class remote_shell(cmd.Cmd):
             iBlockNum = iBlockNum + 1
 
         #    array1[d] = hostlist
-        #print hostlist
+        # print hostlist
         hostlist_size = len(hostlist)
         for layer in range(int(hostlist_size/COLUMN_NUM/(BLOCK_NUM+4))):  # Layer
             for i in range(BLOCK_NUM+4):  # Column
@@ -263,6 +265,9 @@ class remote_shell(cmd.Cmd):
     def do_lang(self, line):
         lang = XUtil.sanitised_input(
             prompt="set language:0 for chinese,1 for English", type_=int, min_=0, max_=1)
+
+        if not self.cfg.has_section("global"):
+            self.cfg.add_section("global")
 
         self.cfg.set("global", "lang", lang)
 
