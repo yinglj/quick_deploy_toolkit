@@ -7,6 +7,15 @@ apt-get install python-pexpect
 also you can use pip install pexpect. pip install pexpect
 
 use base64 encode password in host.cfg file
+host.cfg eg:
+
+[xcm_frame]
+domain = domain1
+host = 192.168.1.2
+port = 22
+user = root
+password = cm9vdDEyMwo=
+workdir = /root
 
 source path:
 https://github.com/yinglj/quick_deploy_toolkit
