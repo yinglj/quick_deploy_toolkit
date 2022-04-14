@@ -137,6 +137,7 @@ class CRemoteCmd3(object):
         for key, value in sorted(self.mapStdout.items(), key=lambda dict: dict[0], reverse=False):
             for i in value:
                 print(i, end='')
+        print("-"*OUT_PUT_WIDTH + "\n")
         # mapStdout.clear()
 
     def onethread_run_ssh(self, domain, hostno, user, password, host, port, workdir, command):
@@ -188,7 +189,7 @@ class CRemoteCmd3(object):
             "{0}\033[36;1m{1} {2} {3: <{4}}\033[0m#\n".format(STR_OUTPUT_PROMOTE, domain, hostno, host, index_count))
         self.mapStdout[host].append("-"*OUT_PUT_WIDTH + "\n")
         self.mapStdout[host].append(msg)
-        self.mapStdout[host].append("-"*OUT_PUT_WIDTH + "\n")
+        #self.mapStdout[host].append("-"*OUT_PUT_WIDTH + "\n")
 
     def Usage(self, command):
         print("usage:"+command+" [host1] command")

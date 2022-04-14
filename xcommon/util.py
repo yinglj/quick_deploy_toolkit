@@ -112,24 +112,34 @@ class XUtil:
                 msg = io.StringIO(in_msg.decode())
         output_msg = ""
         while True:
-            term_encoding = sys.stdout.encoding
-            line = msg.readline()
             try:
                 line = msg.readline().encode('ISO-8859-1')
             except UnicodeEncodeError as e:
                 line = msg.readline().encode('utf-8')
             if len(line) == 0:  # Zero length indicates EOF
                 break
-            orig_encoding = chardet.detect(line)['encoding']
+            d = chardet.detect(line)
+            #print(d['encoding'])
+            mapEncode = {
+                "ascii": 'ascii',
+                "utf-8": 'utf-8',
+                "Windows-1252": 'utf-8',
+                "GB2312": 'gb18030',
+                "ISO-8859-9": 'gb18030',
+                "ISO-8859-1": 'gb18030',
+                "TIS-620": 'gb18030',
+            }
             try:
-                if orig_encoding == None:
-                    orig_encoding = 'unicode_escape'
-                output_msg = output_msg + \
-                    line.decode(orig_encoding).encode(
-                        term_encoding).decode("utf-8", 'ignore')
+                if d['encoding'] in mapEncode.keys():
+                    output_msg = output_msg + line.decode(
+                        mapEncode[d['encoding']])
+                else:
+                    output_msg = output_msg + line.decode(
+                        'unicode_escape').encode('ISO-8859-1').decode(
+                            "utf-8", 'ignore')
             except UnicodeDecodeError as e:
                 print(e)
-                continue
+                pass
             except IOError as e:
                 print(e)
             except ValueError as e:
