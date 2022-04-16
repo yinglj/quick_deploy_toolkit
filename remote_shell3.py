@@ -453,7 +453,8 @@ class remote_shell(cmd.Cmd):
         port = self.cfg.get(host, "port")
         serveraliveinterval = self.cfg.get(host, "serveraliveinterval")
         serveraliveinterval_opt = " " if serveraliveinterval == '0' or serveraliveinterval is None else " -o TCPKeepAlive=yes -o ServerAliveInterval=" + serveraliveinterval
-        cmd = "ssh {0} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {1} {2}@{3}".format(
+        #cmd = "ssh {0} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {1} {2}@{3}".format(
+        cmd = "ssh {0} -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {1} {2}@{3}".format(
             serveraliveinterval_opt, port, user, ip)
         print(cmd)
         child = pexpect.spawn(cmd)
@@ -461,7 +462,7 @@ class remote_shell(cmd.Cmd):
         winsize = self.getwinsize()
         child.setwinsize(winsize[0], winsize[1])
         try:
-            child.expect('(!*)password:(!*)')
+            child.expect('(!*)(P|p)assword:(!*)')
             # base64解码后多一个回车键符，需要剪掉一位
             _ = child.sendline(base64.b64decode(password))
         except pexpect.EOF:
