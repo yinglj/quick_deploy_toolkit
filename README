@@ -17,5 +17,36 @@ user = root
 password = cm9vdDEyMwo=
 workdir = /root
 
+
+Note: the config file(CONFIG_FILE) is rather ../bak/host.cfg or ./host.cfg
+if ../bak/host.cfg not exists means that CONFIG_FILE is ./host.cfg is under the corrent folder
+
+use base64 encode password to modify password in CONFIG_FILE
+
+use command set(uncrypted mode)/enset(encrypted mode) to config the CONFIG_FILE
+localhost all  remote shell#set
+Config the host file:/Users/xiaogui/WorkSpace/code/remoting_login/quick_deploy_toolkit/../bak/host.cfg
+input your host_no: host_eg
+input your domain: domain_eg
+input your host: 10.19.88.79
+input your port: 22
+input your user: user_eg
+input your password: passwd_eg
+keep server alive second: 30
+input your workdir: home/work
+[host_eg]
+domain = domain_eg
+host = 10.19.88.79
+port = 22
+user = user_eg
+password = cGFzc3dkX2Vn
+serveraliveinterval = 30
+workdir = home/work
+confirm the config to be saved.(y/n):y
+
+use rmhost command to remove host in CONFIG_FILE by host_no
+use vl commnad to edit CONFIG_FILE
+use lang command to set lang
+
 source path:
 https://github.com/yinglj/quick_deploy_toolkit
