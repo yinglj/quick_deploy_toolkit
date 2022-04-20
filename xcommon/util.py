@@ -62,7 +62,7 @@ class XUtil:
         return count_zh
 
     @staticmethod
-    def sanitised_input(prompt, type_=None, max_=None, min_=None, range_=None):
+    def sanitised_input(prompt, type_=None, max_=None, min_=None, range_=None, defaultvalue=None):
         prompt += "(q for escape):"
         if min_ is not None and max_ is not None and max_ < min_:
             raise ValueError("min_ must be smaller than max_.")
@@ -73,7 +73,8 @@ class XUtil:
                     ui = INPUT_(prompt)
 
                     if 'q' == ui:
-                        break
+                        return defaultvalue
+                        # break
 
                     ui = type_(ui)
                 except ValueError:

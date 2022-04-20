@@ -264,7 +264,7 @@ class remote_shell(cmd.Cmd):
     # set lang
     def do_lang(self, line):
         lang = XUtil.sanitised_input(
-            prompt="set language:0 for chinese,1 for English", type_=int, min_=0, max_=1)
+            prompt="set language:0 for chinese,1 for English", type_=int, min_=0, max_=1, defaultvalue=self.lang)
 
         if not self.cfg.has_section("global"):
             self.cfg.add_section("global")
