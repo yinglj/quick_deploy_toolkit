@@ -14,17 +14,13 @@
 from __future__ import print_function
 import os
 import sys
-import pexpect
 import time
-import re
-import collections
 import threading
 import base64
 import argparse
-from xcommon.xconfig import *
-from collections import Counter
 from collections import defaultdict
-from collections import OrderedDict
+import pexpect
+from xcommon.xconfig import *
 from xcommon.util import XUtil
 
 
@@ -95,6 +91,7 @@ class CRemoteCmd(object):
         workdir = ""
         domain = ""
         hostno = ""
+        background = ""
         thread_list = []
         for i in s:
             # szCmd=""
@@ -103,6 +100,7 @@ class CRemoteCmd(object):
             host = ""
             workdir = ""
             port = "22"
+            background = ""
             for j in self.cfg.options(i):
                 if j == 'user':
                     user = self.cfg.get(i, j)
@@ -116,6 +114,8 @@ class CRemoteCmd(object):
                     workdir = self.cfg.get(i, j)
                 if j == 'domain':
                     domain = self.cfg.get(i, j)
+                if j == 'background':
+                    domain = self.cfg.get(i, j)
             if domain_config != "" and domain_config != "all" and domain != domain_config:
                 continue
 
@@ -126,7 +126,7 @@ class CRemoteCmd(object):
             hostno = i
             if spec_host == i or spec_host == host or spec_host == "":
                 my_thread = threading.Thread(target=self.onethread_run_ssh, args=(
-                    domain, hostno, user, password, host, port, workdir, command,))
+                    domain, hostno, user, password, host, port, workdir, command, background))
                 #print "-------------------1----------------------------------------------------------------------"
                 my_thread.start()
                 #print "-------------------2----------------------------------------------------------------------"
@@ -139,7 +139,7 @@ class CRemoteCmd(object):
                 print(i, end='')
         # mapStdout.clear()
 
-    def onethread_run_ssh(self, domain, hostno, user, password, host, port, workdir, command):
+    def onethread_run_ssh(self, domain, hostno, user, password, host, port, workdir, command, background):
         spec_cmd = "ssh -p {} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -t {} {}@{} ".format(
             port, background, user, host)
         spec_cmd += command
@@ -150,8 +150,8 @@ class CRemoteCmd(object):
         self.init_command(domain_config, spec_host, command)
 
     def run_ssh(self, domain, hostno, host, cmd, passwd):
-        reload(sys)
-        sys.setdefaultencoding('utf-8')
+        # reload(sys)
+        # sys.setdefaultencoding('utf-8')
         child = pexpect.spawn(cmd)
         try:
             child.expect('(!*)password:(!*)')

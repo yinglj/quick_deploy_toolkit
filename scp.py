@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #coding=utf-8
 
 # ---------------------------------------------------------------------------------------
@@ -30,9 +30,9 @@ def run_scp():
 
 
 def Usage(command):
-    print "usage:{} file user userpasswd ip_addr dir".format(command)
-    print "example: {} abc.tar.gz root password123 10.10.13.181 /home/mongo/".format(
-        command)
+    print("usage:{} port file user userpasswd ip_addr dir".format(command))
+    print("example: {} 22 abc.tar.gz root password123 10.10.13.181 /home/mongo/".format(
+        command))
 
 
 if __name__ == '__main__':
@@ -43,10 +43,10 @@ if __name__ == '__main__':
             run_scp()
             time.sleep(0)
         except KeyboardInterrupt as e:
-            print e
+            print(e)
         except IOError as e:
-            print e
+            print(e)
         except ValueError as e:
-            print e
+            print(e)
         finally:
             pass

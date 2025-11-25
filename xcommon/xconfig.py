@@ -4,9 +4,9 @@ import re
 import sys
 
 # 界面显示配置定义，这块可以根据需要调整
-COLUMN_NUM = 3
+COLUMN_NUM = 5
 HOST_WIDTH = 12
-USER_WIDTH = 12
+USER_WIDTH = 13
 IP_WIDTH = 16
 COLUMN_WIDTH = HOST_WIDTH + USER_WIDTH + IP_WIDTH
 BLOCK_NUM = 10

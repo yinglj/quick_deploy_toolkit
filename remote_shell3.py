@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.10
 # -*- coding: utf-8 -*-
 
 # ---------------------------------------------------------------------------------------
@@ -16,26 +16,29 @@ import glob
 import sys
 import cmd
 import subprocess
-import string
 import os
-import pexpect
 import base64
-import signal
 import termios
 import struct
 import fcntl
 import socket
-from xcommon.xconfig import *
 from collections import Counter
 from collections import defaultdict
+import readline
+import pexpect
+from xcommon.xconfig import *
 from xcommon.util import XUtil
+
 
 # todo add set variable to save domain, check host.cfg is existed while set domain.
 # todo add set variable to save host
 # todo show domain host
 
 
-class remote_shell(cmd.Cmd):
+class RemoteShell(cmd.Cmd):
+    '''
+    remote shell
+    '''
 
     def __init__(self, host):
         cmd.Cmd.__init__(self)
@@ -43,20 +46,22 @@ class remote_shell(cmd.Cmd):
         self.secs = 1.0
         self.count = 3
         self.his = []
-        self.hostName = socket.gethostname()
+        self.host_name = socket.gethostname()
         self.host = host
         self.config_file = XUtil.get_host('host.cfg')
         # self.config_file = sys.path[0]+'/host.cfg'
         self.domain = "all"
-        self.prompt = '\033[36;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(
-            self.hostName, self.domain, self.host)
-        self.mapDomainHost = defaultdict(list)
+        self.prompt = f'\033[36;1m{self.host_name} \033[32;1m{self.domain} {self.host}\033[36;1m remote shell\033[0m#'
+        self.map_domain_host = defaultdict(list)
         self.histfile = os.path.expanduser('~/.remote_shell_history')
         self.histfile_size = 1000
 
         self.refresh_menu()
 
     def quit(self):
+        '''
+        quit
+        '''
         try:
             self.quit()
         except:
@@ -64,12 +69,11 @@ class remote_shell(cmd.Cmd):
 
     def do_prompt(self, line):
         '''Set command prompt, eg. \"prompt remote shell\"'''
-        self.prompt = '\033[36;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(
-            self.hostName, self.domain, self.host)
+        self.prompt = f'\033[36;1m{self.host_name} \033[32;1m{self.domain} {self.host}\033[36;1m remote shell\033[0m#'
 
     def do_EOF(self, line):
         '''Exit remote_shell.py with EOF.'''
-        print
+        # print
         return 1
 
     def preloop(self):
@@ -82,12 +86,15 @@ class remote_shell(cmd.Cmd):
 
     # 采用按块显示的方式，每个块固定BLOCK_NUM决定块里有多个主机，默认为10条
     def refresh_menu(self):
+        '''
+        refresh menu
+        '''
         self.cfg = XConfigParser(allow_no_value=True)
         self.cfg.read(self.config_file)
 
-        self.mapDomainHost.clear()
+        self.map_domain_host.clear()
         domaintmp = []
-        self.mapLogin = {}
+        self.map_login = {}
         for i in self.cfg.sections():
             # print self.cfg.options(i)
             if i == "global":
@@ -97,15 +104,15 @@ class remote_shell(cmd.Cmd):
                 # print self.cfg.get(i,j)
                 if j == "domain":
                     domaintmp.append(self.cfg.get(i, j))
-                    self.mapDomainHost[self.cfg.get(i, j)].append(i)
+                    self.map_domain_host[self.cfg.get(i, j)].append(i)
             #! 支持按IP进行登录跳转
-            self.mapLogin[self.cfg.get(
+            self.map_login[self.cfg.get(
                 i, 'user')+"@"+self.cfg.get(i, 'host')] = i
-            self.mapLogin[self.cfg.get(
+            self.map_login[self.cfg.get(
                 i, 'host')+"@"+self.cfg.get(i, 'user')] = i
-            self.mapLogin[self.cfg.get(i, 'host')] = i
+            self.map_login[self.cfg.get(i, 'host')] = i
 
-        # print self.mapDomainHost
+        # print self.map_domain_host
         self.domain_list = Counter(domaintmp)
         # print(self.domain_list)
         # for a,b in self.domain_list.items():
@@ -114,57 +121,55 @@ class remote_shell(cmd.Cmd):
         #    print c, "to=>", d
 
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
-        print("*"+"{0: ^{1}}".format("welcome to use scripts for remoting login",
-              (COLUMN_WIDTH+1)*COLUMN_NUM-1)+"*")  # {}内嵌{}
+        # print("*"+"{0: ^{1}}".format("welcome to use scripts for remoting login",
+        #       (COLUMN_WIDTH+1)*COLUMN_NUM-1)+"*")  # {}内嵌{}
+        print(
+            f"*{'welcome to use scripts for remoting login':^{(COLUMN_WIDTH + 1) * COLUMN_NUM - 1}}*")
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
 
         hostlist = []
         # for d,h in sorted(self.domain_list.iteritems(),key=lambda dict:dict[1],reverse=False):   #domain, 按主机数量增序排列
         # domain, 按主机数量增序排列
         for d, h in sorted(self.domain_list.items(), key=lambda dict: dict[0], reverse=False):
-            if(self.domain != "all" and d != self.domain):
+            if (self.domain != "all" and d != self.domain):
                 continue
-            iNum = 0
+            i_num = 0
 
-            for i in sorted(self.mapDomainHost[d]):
-                if(iNum % BLOCK_NUM == 0):
+            for i in sorted(self.map_domain_host[d]):
+                if (i_num % BLOCK_NUM == 0):
                     # {: ^38}, 38宽度补空格对齐
                     hostlist.append(
-                        "*"+"\033[32;1m{0: ^{1}}\033[0m".format(d, COLUMN_WIDTH-XUtil.str_count(d)))
+                        f"*\033[32;1m{d:^{COLUMN_WIDTH-XUtil.str_count(d)}}\033[0m")
                     hostlist.append(
-                        "*"+"{0: ^{1}}".format(" -"*(int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
-                    hostlist.append("*"+" {0: <{1}}{2: <{3}}{4: <{5}}".format(
-                        "HOST.NO", HOST_WIDTH-1, "用户", USER_WIDTH-XUtil.str_count("用户"), "IP列表", IP_WIDTH-XUtil.str_count("IP列表")))
-                str1 = "*"+" \033[36;1m{0: <{1}}\033[0m{2:<{3}}{4: <{5}}".format(
-                    i, HOST_WIDTH-1, self.cfg.get(i, "user"), USER_WIDTH, self.cfg.get(i, "host"), IP_WIDTH)
+                        f"*{' -'*(int(COLUMN_WIDTH/2)): ^{COLUMN_WIDTH}}")
+                    hostlist.append("*"+f" {'HOST.NO': <{HOST_WIDTH-1}}{'用户': <{USER_WIDTH-XUtil.str_count('用户')}}{'IP列表': <{IP_WIDTH-XUtil.str_count('IP列表')}}")
+                str1 = "*"+f" \033[36;1m{i[:HOST_WIDTH-2]: <{HOST_WIDTH-1}}\033[0m{self.cfg.get(i, 'user')[:USER_WIDTH-1]:<{USER_WIDTH}}{self.cfg.get(i, 'host')[:IP_WIDTH-1]: <{IP_WIDTH}}"
                 hostlist.append(str1)  # host
-                iNum = iNum + 1
-                if(iNum % BLOCK_NUM == 0):
+                i_num = i_num + 1
+                if (i_num % BLOCK_NUM == 0):
                     hostlist.append("*"+"*"*COLUMN_WIDTH)
 
-            while((iNum % BLOCK_NUM) != 0):  # 补足BLOCK_NUM
-                hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
-                iNum = iNum + 1
+            while (i_num % BLOCK_NUM) != 0:  # 补足BLOCK_NUM
+                hostlist.append("*"+f"{' ': ^{COLUMN_WIDTH}}")
+                i_num = i_num + 1
 
             if h % BLOCK_NUM != 0:  # 不是BLOCK_NUM的倍数时，才需要补一行:"*"+"*"*COLUMN_WIDTH
                 hostlist.append("*"+"*"*COLUMN_WIDTH)
 
         # 补足COLUMN_NUM的倍数的数据块, 其中为固定字符的4行
-        iBlockNum = (len(hostlist)/(BLOCK_NUM+4)) % COLUMN_NUM
-        while(iBlockNum % COLUMN_NUM != 0):
+        i_block_num = (len(hostlist)/(BLOCK_NUM+4)) % COLUMN_NUM
+        while i_block_num % COLUMN_NUM != 0:
             # {: ^38}, 38宽度补空格对齐
-            hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
-            hostlist.append("*"+"{0: ^{1}}".format(" -" *
-                            (int(COLUMN_WIDTH/2)), COLUMN_WIDTH))
-            hostlist.append("*"+" {0: <{1}}{2: ^{3}}{4: ^{5}}".format("HOST.NO", HOST_WIDTH-1,
-                            "用户", USER_WIDTH-XUtil.str_count("用户"), "IP列表", IP_WIDTH-XUtil.str_count("IP列表")))
-            hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
-            iNum1 = 1
-            while(iNum1 % BLOCK_NUM != 0):  # 补足BLOCK_NUM
-                hostlist.append("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))
-                iNum1 = iNum1 + 1
+            hostlist.append("*"+f"{' ': ^{COLUMN_WIDTH}}")
+            hostlist.append("*"+f"{' -' *(int(COLUMN_WIDTH/2)): ^{COLUMN_WIDTH}}")
+            hostlist.append("*"+f" {'HOST.NO': <{HOST_WIDTH-1}}{'用户': ^{USER_WIDTH-XUtil.str_count('用户')}}{'IP列表': ^{IP_WIDTH-XUtil.str_count('IP列表')}}")
+            hostlist.append("*"+f"{' ': ^{COLUMN_WIDTH}}")
+            i_num1 = 1
+            while i_num1 % BLOCK_NUM != 0:  # 补足BLOCK_NUM
+                hostlist.append("*"+f"{' ': ^{COLUMN_WIDTH}}")
+                i_num1 = i_num1 + 1
             hostlist.append("*"+"*"*COLUMN_WIDTH)
-            iBlockNum = iBlockNum + 1
+            i_block_num = i_block_num + 1
 
         #    array1[d] = hostlist
         # print hostlist
@@ -176,37 +181,37 @@ class remote_shell(cmd.Cmd):
                     line = line + \
                         hostlist[layer*COLUMN_NUM *
                                  (BLOCK_NUM+4)+(BLOCK_NUM+4)*j+i]
-                if(line != ("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))*COLUMN_NUM):  # 空行
+                # if(line != ("*"+"{0: ^{1}}".format(" ", COLUMN_WIDTH))*COLUMN_NUM):  # 空行
+                if line != ("*"+f"{' ': ^{COLUMN_WIDTH}}")*COLUMN_NUM:  # 空行
                     print(line+"*")
-        help = []
-        # help.append("{0: <{1}}".format(" 帮  助 $  输入HOST.NO,登录对应主机",COLUMN_WIDTH+10))   #10为里面包含了10个汉字
-        # help.append("{0: <{1}}".format(" exit: 退出 | set domain: 切换主机域",COLUMN_WIDTH+7))  #7为里面包含了7个汉字
+        help_txt = []
         temp_hint = " 帮  助 $  输入HOST.NO,登录对应主机"
-        help.append("{0: <{1}}".format(temp_hint, COLUMN_WIDTH -
-                    XUtil.str_count(temp_hint)))  # 10为里面包含了10个汉字
+        # 10为里面包含了10个汉字
+        help_txt.append(
+            f"{temp_hint: <{COLUMN_WIDTH -XUtil.str_count(temp_hint)}}")
         temp_hint = " exit: 退出 | set domain: 切换主机域"
-        help.append("{0: <{1}}".format(temp_hint, COLUMN_WIDTH -
-                    XUtil.str_count(temp_hint)))  # 7为里面包含了7个汉字
+        # 7为里面包含了7个汉字
+        help_txt.append(
+            f"{temp_hint: <{COLUMN_WIDTH -XUtil.str_count(temp_hint)}}")
         for i in range(COLUMN_NUM - 3):  # 前面的两行help
-            help.append(" "*COLUMN_WIDTH)
+            help_txt.append(" "*COLUMN_WIDTH)
             i = i+1
         help_line = "*"
         # n = 0
-        for l in help:
-            help_line = help_line + "{0: <{1}}".format(l, COLUMN_WIDTH-20)
+        for l in help_txt:
+            help_line = help_line + f"{l: <{COLUMN_WIDTH-20}}"
             help_line = help_line + "|"
-        help_line = help_line + " 当前域：\033[31;1m{0: <10} {1: >15}\033[0m".format(
-            self.domain, self.host) + " "*(COLUMN_WIDTH-35-XUtil.str_count(self.domain)) + "*"
+        help_line += f" 当前域：\033[31;1m{self.domain: <10} {self.host: >15}\033[0m"
+        help_line += " "*(COLUMN_WIDTH-35-XUtil.str_count(self.domain)) + "*"
         print(help_line)
 
         print("*"+"*"*(COLUMN_WIDTH+1)*COLUMN_NUM)
-        self.prompt = '\033[33;1m{0} \033[32;1m{1} {2}\033[36;1m remote shell\033[0m#'.format(
-            self.hostName, self.domain, self.host)
+        self.prompt = f'\033[33;1m{self.host_name} \033[32;1m{self.domain} {self.host}\033[36;1m remote shell\033[0m#'
 
     def emptyline(self):
         self.refresh_menu()
         self.quit()
-        pass
+        # pass
 
     def do_exit(self, line):
         '''Exit remote_shell.py.'''
@@ -254,14 +259,13 @@ class remote_shell(cmd.Cmd):
                 self.host = ""
                 self.refresh_menu()
                 return False
-            for d, h in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
-                if(parse_temp[0].lower() == d.lower()):
+            for d, _ in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
+                if parse_temp[0].lower() == d.lower():
                     self.domain = d
                     self.host = ""
                     self.refresh_menu()
                     return False
-            print('domain \033[31;1m{}\033[0m is not exists.'.format(
-                parse_temp[0]))
+            print(f'domain \033[31;1m{parse_temp[0]}\033[0m is not exists.')
 
         return False
 
@@ -272,11 +276,11 @@ class remote_shell(cmd.Cmd):
 
         mline = line.partition(' ')[-1]
         # domain, 按主机数量增序排列
-        for d, h in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
-            if(self.domain != "all" and d != self.domain):
+        for d, _ in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
+            if (self.domain != "all" and d != self.domain):
                 completions_set.append(d)
                 continue
-            iNum = 0
+            # i_num = 0
             completions_set.append(d)
 
         offs = len(mline) - len(text)
@@ -317,16 +321,16 @@ class remote_shell(cmd.Cmd):
 
         if path.partition(' ')[-1] == "" and len(line.split(" ")) == 1:
             # domain, 按主机数量增序排列
-            for d, h in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
-                if(self.domain != "all" and d != self.domain):
+            for d, _ in sorted(self.domain_list.items(), key=lambda dict: dict[1], reverse=False):
+                if (self.domain != "all" and d != self.domain):
                     continue
-                iNum = 0
+                # i_num = 0
                 # completions.append("domain "+d)
-                for i in self.mapDomainHost[d]:
+                for i in self.map_domain_host[d]:
                     if i.startswith(path):
                         completions.append(i)
 
-                for k, v in self.mapLogin.items():
+                for k, _ in self.map_login.items():
                     if k.startswith(path):
                         completions.append(k)
 
@@ -347,7 +351,8 @@ class remote_shell(cmd.Cmd):
                     [(s.split('/'))[-1] for s in glob.glob(i+"/"+path+"*")]
         return completions
 
-    def _complete_path(self, path, line, start_idx, end_idx):
+    # def _complete_path(self, path, line, start_idx, end_idx):
+    def _complete_path(self, path, start_idx, end_idx):
         if path[0] == '~':
             path = os.path.expanduser('~')+path[1:]
         if os.path.isdir(path):
@@ -363,7 +368,7 @@ class remote_shell(cmd.Cmd):
 
     def do_show(self, line):
         '''show the domain and host information, eg. show.'''
-        print("domain={0}, host={1}\n".format(self.domain, self.host))
+        print(f"domain={self.domain}, host={self.host}\n")
         return False
 
     def do_quit(self, line):
@@ -393,8 +398,8 @@ class remote_shell(cmd.Cmd):
         if line in self.cfg.sections():
             self.remote_interactive(line)
             return
-        if line in self.mapLogin.keys():
-            self.remote_interactive(self.mapLogin[line])
+        if line in self.map_login:
+            self.remote_interactive(self.map_login[line])
             return
         if line != "" and line[0] == '!':
             if len(line) > 2 and line[1:3] == "vi":
@@ -408,8 +413,8 @@ class remote_shell(cmd.Cmd):
         if len(line) > 1 and line[0:2] == "vi":
             print("can't support vi or vim. Interactive command is so on.")
             return False
-        self.remote_cmd(self.host, line)
-        pass
+        self.remote_cmd(line)
+        # pass
 
     def do_shell(self, line):
         '''Execute the rest of the line as a shell command, eg. \'!ls\', \'shell pwd\'.
@@ -418,15 +423,18 @@ class remote_shell(cmd.Cmd):
         if line in self.cfg.sections():
             self.remote_interactive(line)
             return
-        self.remote_cmd(self.host, line)
+        self.remote_cmd(line)
 
     # tab自动补齐shell命令的参数
     def complete_shell(self, text, line, start_idx, end_idx):
+        '''
+        complete shell
+        '''
         return self._complete_path(text, line, start_idx, end_idx)
 
     def do_run(self, line):
         '''Execute the rest of the line as a shell command, eg. \'run ls\', \'run pwd\'.'''
-        self.remote_cmd(self.host, line)
+        self.remote_cmd(line)
 
     # def sigwinch_passthrough (sig, data):
     #    winsize = self.getwinsize()
@@ -437,27 +445,42 @@ class remote_shell(cmd.Cmd):
         """This returns the window size of the child tty.
         The return value is a tuple of (rows, cols).
         """
-        if 'TIOCGWINSZ' in dir(termios):
-            TIOCGWINSZ = termios.TIOCGWINSZ
-        else:
-            # TIOCGWINSZ = 1074295912L # Assume
-            TIOCGWINSZ = 1074295912  # Assume
+        # if 'TIOCGWINSZ' in dir(termios):
+        #     TIOCGWINSZ = termios.TIOCGWINSZ
+        # else:
+        #     # TIOCGWINSZ = 1074295912L # Assume
+        #     TIOCGWINSZ = 1074295912  # Assume
         s = struct.pack('HHHH', 0, 0, 0, 0)
-        x = fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ, s)
+        x = fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ if 'TIOCGWINSZ' in dir(
+            termios) else 1074295912, s)
         return struct.unpack('HHHH', x)[0:2]
 
     def remote_interactive(self, host):
+        ''' remote interactive'''
+        if os.path.isfile(self.cfg.get(host, "password")):
+            self.remote_interactive_pem(host)
+        else:
+            self.remote_interactive_passwd(host)
+
+    def remote_interactive_passwd(self, host):
+        ''' remote interactive by password'''
         user = self.cfg.get(host, "user")
         password = self.cfg.get(host, "password")
         ip = self.cfg.get(host, "host")
         port = self.cfg.get(host, "port")
+        ssh_param = self.cfg.get(host, "ssh_param")
+        if ssh_param is None:
+            ssh_param = ""
         serveraliveinterval = self.cfg.get(host, "serveraliveinterval")
-        serveraliveinterval_opt = " " if serveraliveinterval == '0' or serveraliveinterval is None else " -o TCPKeepAlive=yes -o ServerAliveInterval=" + serveraliveinterval
-        #cmd = "ssh {0} -o PreferredAuthentications=password -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {1} {2}@{3}".format(
-        cmd = "ssh {0} -o PubkeyAuthentication=no -o StrictHostKeyChecking=no -p {1} {2}@{3}".format(
-            serveraliveinterval_opt, port, user, ip)
-        print(cmd)
-        child = pexpect.spawn(cmd)
+        serveraliveinterval_opt = (
+            "" if serveraliveinterval == '0' or serveraliveinterval is None
+            else " -o TCPKeepAlive=yes -o ServerAliveInterval=" + serveraliveinterval
+        )
+        str_cmd = f"ssh {serveraliveinterval_opt} -o PubkeyAuthentication=no " \
+                  f"{ssh_param} " \
+                  f"-o StrictHostKeyChecking=no -p {port} {user}@{ip}"
+        print(str_cmd)
+        child = pexpect.spawn(str_cmd)
         # signal.signal(signal.SIGWINCH, self.sigwinch_passthrough)
         winsize = self.getwinsize()
         child.setwinsize(winsize[0], winsize[1])
@@ -466,12 +489,12 @@ class remote_shell(cmd.Cmd):
             # base64解码后多一个回车键符，需要剪掉一位
             _ = child.sendline(base64.b64decode(password))
         except pexpect.EOF:
-            print("can not connect to {}".format(host))
+            print(f"can not connect to {host}")
             if child.isalive():
                 child.close(force=True)
             return
         except pexpect.TIMEOUT:
-            print("connect timeout {}".format(host))
+            print(f"connect timeout {host}")
             if child.isalive():
                 child.close(force=True)
             return
@@ -480,20 +503,59 @@ class remote_shell(cmd.Cmd):
         child.expect(pexpect.EOF)
         child.close(force=True)
 
-    def remote_cmd(self, host, line):
+    def remote_interactive_pem(self, host):
+        ''' remote interactive by pem file'''
+        user = self.cfg.get(host, "user")
+        password = self.cfg.get(host, "password")
+        ip = self.cfg.get(host, "host")
+        # port = self.cfg.get(host, "port")
+        serveraliveinterval = self.cfg.get(host, "serveraliveinterval")
+        serveraliveinterval_opt = (
+            " " if serveraliveinterval == '0' or serveraliveinterval is None
+            else " -o TCPKeepAlive=yes -o ServerAliveInterval=" + serveraliveinterval
+        )
+        str_cmd = f"ssh {serveraliveinterval_opt} -o PubkeyAuthentication=yes -o StrictHostKeyChecking=no -i {password} {user}@{ip}"
+        print(str_cmd)
+        child = pexpect.spawn(str_cmd)
+        # signal.signal(signal.SIGWINCH, self.sigwinch_passthrough)
+        winsize = self.getwinsize()
+        child.setwinsize(winsize[0], winsize[1])
+        # try:
+        #     child.expect('(!*)(P|p)assword:(!*)')
+        #     # base64解码后多一个回车键符，需要剪掉一位
+        #     _ = child.sendline(base64.b64decode(password))
+        # except pexpect.EOF:
+        #     print("can not connect to {}".format(host))
+        #     if child.isalive():
+        #         child.close(force=True)
+        #     return
+        # except pexpect.TIMEOUT:
+        #     print("connect timeout {}".format(host))
+        #     if child.isalive():
+        #         child.close(force=True)
+        #     return
+
+        child.interact()
+        child.expect(pexpect.EOF)
+        child.close(force=True)
+
+    def remote_cmd(self, line):
+        '''
+        remote command
+        '''
         line = line.replace("\"", "\\\"").replace(
             "$", "\\$").replace("\'", "\\'").replace("`", "\\`")
         line = "\""+line+"\""
         # print "line:{0}".format(line)
         if self.host != "":
-            szCmd = "{0}/remote_cmd3.py --domain {1} --ip {2} {3}".format(os.path.dirname(os.path.realpath(__file__)),
-                                                                          self.domain, self.host, line)
+            sz_cmd = f"{os.path.dirname(os.path.realpath(__file__))}/remote_cmd3.py " \
+                f"--domain {self.domain} --ip {self.host} {line}"
         else:
-            szCmd = "{0}/remote_cmd3.py --domain {1} {2}".format(os.path.dirname(os.path.realpath(__file__)),
-                                                                 self.domain, line)
+            sz_cmd = f"{os.path.dirname(os.path.realpath(__file__))}/remote_cmd3.py " \
+                     f"--domain {self.domain} {line}"
         # print(szCmd)
         command = subprocess.Popen(
-            szCmd, shell=True, stdout=subprocess.PIPE, universal_newlines=True)
+            sz_cmd, shell=True, stdout=subprocess.PIPE, universal_newlines=True)
         while 1:
             out = command.stdout.readline()
             if out == '':
@@ -506,7 +568,7 @@ class remote_shell(cmd.Cmd):
         print("Config the host file:" + self.config_file)
         host_no = input("Input your host_no: ")
         # section already exists return
-        if True == self.cfg.has_section(host_no):
+        if self.cfg.has_section(host_no):
             print("host_no:" + host_no + " already exists!")
             return
 
@@ -547,7 +609,7 @@ class remote_shell(cmd.Cmd):
             self.cfg.set(host_no, "workdir", workdir)
 
             # write to file
-            with open(self.config_file, "w+") as f:
+            with open(self.config_file, "w+", encoding='utf-8') as f:
                 self.cfg.write(f)
             self.emptyline()
 
@@ -555,12 +617,12 @@ class remote_shell(cmd.Cmd):
         '''rm the host_no cofig'''
         host_no = input("Input the host_no you want to rm: ")
         # section not exists return
-        if False == self.cfg.has_section(host_no):
+        if not self.cfg.has_section(host_no):
             print("host_no:" + host_no + " not exists!")
             return
         self.cfg.remove_section(host_no)
         # write to file
-        with open(self.config_file, "w+") as f:
+        with open(self.config_file, "w+", encoding='utf-8') as f:
             self.cfg.write(f)
         self.emptyline()
 
@@ -576,7 +638,6 @@ if __name__ == '__main__':
             os.execve(os.path.realpath(__file__),
                       sys.argv, os.environ)  # * rerun
 
-    import readline
     readline.set_completer_delims(' \t\n')
 
     if len(sys.argv) > 2:
@@ -584,16 +645,10 @@ if __name__ == '__main__':
         print("usage:", sys.argv[0], "host")
     else:
         if len(sys.argv) == 2:
-            client = remote_shell(sys.argv[1])
+            client = RemoteShell(sys.argv[1])
         else:
-            client = remote_shell("")
+            client = RemoteShell("")
         try:
             client.cmdloop()
-        except KeyboardInterrupt as e:
-            print(e)
-        except IOError as e:
-            print(e)
-        except ValueError as e:
-            print(e)
         finally:
             client.quit()
