@@ -286,6 +286,157 @@ class RemoteShell(cmd.Cmd):
         offs = len(mline) - len(text)
         return [s[offs:] for s in completions_set if s.startswith(mline)]
 
+    # ----------------------------------------------------------------------
+    # 新增：add 命令（一行添加完整主机信息）
+    # 用法示例：
+    # add mdb_benchmark benchmark01 10.21.15.100 22 aidb 123456 /data/aidb "-o MACs=hmac-sha2-256"
+    # ----------------------------------------------------------------------
+    def do_add(self, line):
+        '''Add a new host entry quickly.
+Usage: add <domain> <host_no> <ip> <port> <user> <password> <workdir> [ssh_param]'''
+        args = line.strip().split()
+        if len(args) < 7:
+            print("Error: 参数不足，至少需要 7 个参数（domain host_no ip port user password workdir）")
+            return
+
+        domain, host_no, ip, port, user, password, workdir = args[:7]
+        ssh_param = " ".join(args[7:]) if len(args) > 7 else ""
+
+        # 读取最新配置（防止在交互过程中被其他方式修改）
+        self.cfg = XConfigParser(allow_no_value=True)
+        self.cfg.read(self.config_file)
+
+        if self.cfg.has_section(host_no):
+            print(f"Error: host_no [{host_no}] 已存在！")
+            return
+
+        # 加密密码（保持原来加密方式）
+        enpassword = base64.b64encode(password.encode('utf-8')).decode('utf-8')
+
+        # 添加 section
+        self.cfg.add_section(host_no)
+        self.cfg.set(host_no, "domain", domain)
+        self.cfg.set(host_no, "host", ip)
+        self.cfg.set(host_no, "port", port)
+        self.cfg.set(host_no, "user", user)
+        self.cfg.set(host_no, "password", enpassword)
+        self.cfg.set(host_no, "workdir", workdir)
+        if ssh_param:
+            self.cfg.set(host_no, "ssh_param", ssh_param)
+        self.cfg.set(host_no, "serveraliveinterval", "0")   # 默认不开启 keepalive
+
+        # 写回文件
+        with open(self.config_file, "w", encoding='utf-8') as f:
+            self.cfg.write(f)
+
+        print(f"Success: 已成功添加主机 [{host_no}]（{ip}）")
+        self.refresh_menu()   # 刷新菜单显示最新内容
+
+    def help_add(self):
+        print("快速添加主机")
+        print("add <domain> <host_no> <ip> <port> <user> <password> <workdir> [ssh_param]")
+
+    # ----------------------------------------------------------------------
+    # delete 命令 + Tab 自动补全（完整版）
+    # 用法：
+    #   delete <host_no>                     # 直接删
+    #   delete <domain> <host_no>            # 更安全，防止跨域误删
+    # ----------------------------------------------------------------------
+    def do_delete(self, line):
+        '''Delete a host entry.\nUsage:\n  delete <host_no>\n  delete <domain> <host_no>'''
+        args = line.strip().split()
+        if not args:
+            print("Error: 请提供要删除的 host_no")
+            return
+
+        # 每次操作前都重新读取最新配置文件
+        self.cfg = XConfigParser(allow_no_value=True)
+        self.cfg.read(self.config_file)
+
+        target = None
+
+        if len(args) == 1:
+            # 只提供 host_no，直接按 section 名删除（兼容老习惯）
+            host_no = args[0]
+            if not self.cfg.has_section(host_no):
+                print(f"Error: 未找到 host_no [{host_no}]")
+                return
+            target = host_no
+
+        else:
+            # 提供 domain + host_no，精准匹配
+            domain, host_no = args[0], args[1]
+            found = False
+            for sec in self.cfg.sections():
+                if (self.cfg.has_option(sec, "domain") and 
+                    self.cfg.get(sec, "domain") == domain and 
+                    sec == host_no):
+                    target = sec
+                    found = True
+                    break
+            if not found:
+                print(f"Error: 在 domain [{domain}] 中未找到 host_no [{host_no}]")
+                return
+
+        if input(f"Confirm: 确认删除主机 [{target}] ? (y/N): ").lower() != 'y':
+            print("已取消删除")
+            return
+
+        self.cfg.remove_section(target)
+        with open(self.config_file, "w", encoding='utf-8') as f:
+            self.cfg.write(f)
+
+        print(f"Success: 已成功删除主机 [{target}]")
+        self.refresh_menu()
+
+    def help_delete(self):
+        print("删除主机配置")
+        print("delete <host_no>")
+        print("delete <domain> <host_no>   # 推荐，更安全")
+
+    # ----------------------------------------------------------------------
+    # delete 命令的 Tab 补全（完全参考 complete_domain 的写法）
+    # ----------------------------------------------------------------------
+    def complete_delete(self, text, line, begidx, endidx):
+        """
+        Tab completion for delete command
+        - delete <TAB>          → list all domains
+        - delete mdb<TAB>       → list host_no under domain "mdb..."
+        - delete mdb_benchmark <TAB> → list host_no in this domain
+        - delete bench<TAB>     → also list matching host_no directly (single-arg mode)
+        """
+        args = line.split()
+        completions = []
+
+        # 还没输入任何参数 → 补全 domain（和 domain 命令完全一致）
+        if len(args) == 1 or (len(args) == 2 and not line.endswith(' ')):
+            # 第一个参数：补全 domain
+            for d in self.domain_list.keys():
+                if d.startswith(text):
+                    completions.append(d)
+            # 同时也支持直接输入 host_no（单参数模式）
+            if not text.startswith('all'):
+                for sec in self.cfg.sections():
+                    if sec.startswith(text):
+                        completions.append(sec)
+            return completions
+
+        # 已经输入了 domain（两个参数的情况）
+        if len(args) >= 2:
+            domain = args[1]                     # delete <domain> ...
+            if domain in self.map_domain_host:
+                for host_no in self.map_domain_host[domain]:
+                    if host_no.startswith(text):
+                        completions.append(host_no)
+
+        # 当用户在第一参数已经敲了一部分 host_no 时，也要能补全（单参数写法）
+        if len(args) == 2 and not line.endswith(' '):
+            for sec in self.cfg.sections():
+                if sec.startswith(text):
+                    completions.append(sec)
+
+        return completions
+    
     # 重写cmd类的completedefault
     def completedefault(self, text, line, begidx, endidx):
         return self.completenames(text, line, begidx, endidx)
@@ -307,6 +458,8 @@ class RemoteShell(cmd.Cmd):
             'enset',
             'rmhost',
             'domain',
+            'add',
+            'delete',
             'show',
             'quit',
             'by',
@@ -392,7 +545,7 @@ class RemoteShell(cmd.Cmd):
                 or line.startswith("help") or line == "EOF" or line.startswith("shell") \
                 or line.startswith("run") or line.startswith("show") or line == "q" \
                 or line == "set" or line == "enset" or line == "vl" or line == "rmhost" \
-                or line.startswith("domain"):
+                or line.startswith("domain") or line.startswith("add") or line.startswith("delete"):
             return cmd.Cmd.onecmd(self, line)
         line = line.strip()
         if line in self.cfg.sections():
